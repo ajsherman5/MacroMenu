@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:koscodigital.com)",
+      "Bash(node:*)",
+      "Bash(npx expo:*)",
+      "Bash(npx create-expo-app@latest MacroMenu --template blank)",
+      "Bash(npm install:*)",
+      "Bash(unzip:*)",
+      "Bash(npm ls:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
