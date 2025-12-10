@@ -42,6 +42,7 @@ export default function AppNavigator() {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: '#F9F9F9' },
         }}
       >
         {/* Onboarding Flow */}
@@ -55,7 +56,11 @@ export default function AppNavigator() {
         <Stack.Screen name="Height" component={HeightScreen} />
         <Stack.Screen name="Weight" component={WeightScreen} />
         <Stack.Screen name="GoalWeight" component={GoalWeightScreen} />
-        <Stack.Screen name="Timeline" component={TimelineScreen} />
+        <Stack.Screen
+          name="Timeline"
+          component={TimelineScreen}
+          options={{ contentStyle: { backgroundColor: '#F9F9F9' } }}
+        />
         <Stack.Screen name="ActivityLevel" component={ActivityLevelScreen} />
         <Stack.Screen name="EatingStyle" component={EatingStyleScreen} />
         <Stack.Screen name="EveryRestaurant" component={EveryRestaurantScreen} />

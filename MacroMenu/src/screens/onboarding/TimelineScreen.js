@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Keyboard, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,25 +17,32 @@ export default function TimelineScreen({ navigation, route }) {
   const [selected, setSelected] = useState(null);
   const [customWeeks, setCustomWeeks] = useState('');
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef(null);
 
   const handleSelect = (id) => {
     setSelected(id);
     if (id !== 'custom') {
       setCustomWeeks('');
       Keyboard.dismiss();
+    } else {
+      // Scroll to bottom when custom is selected so input clears the keyboard
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 300);
     }
   };
 
   const isValid = selected && (selected !== 'custom' || (customWeeks && parseInt(customWeeks) > 0));
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.rootContainer}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        <View style={styles.header}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+          <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#000" />
           </TouchableOpacity>
@@ -47,6 +54,7 @@ export default function TimelineScreen({ navigation, route }) {
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -106,31 +114,38 @@ export default function TimelineScreen({ navigation, route }) {
               </View>
             ))}
           </View>
+
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity
-            style={[styles.button, !isValid && styles.buttonDisabled]}
-            onPress={() => navigation.navigate('ActivityLevel', { goal })}
-            disabled={!isValid}
-          >
-            <Text style={[styles.buttonText, !isValid && styles.buttonTextDisabled]}>
-              Continue
-            </Text>
-          </TouchableOpacity>
-        </View>
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            <TouchableOpacity
+              style={[styles.button, !isValid && styles.buttonDisabled]}
+              onPress={() => navigation.navigate('ActivityLevel', { goal })}
+              disabled={!isValid}
+            >
+              <Text style={[styles.buttonText, !isValid && styles.buttonTextDisabled]}>
+                Continue
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootContainer: {
     flex: 1,
     backgroundColor: '#F9F9F9',
   },
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   keyboardAvoid: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -167,7 +182,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 9,
   },
   title: {
     fontSize: 28,
@@ -233,7 +248,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 12,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: 'transparent',
   },
   button: {
     backgroundColor: '#000',

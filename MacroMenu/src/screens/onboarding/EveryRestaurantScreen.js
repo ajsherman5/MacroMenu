@@ -1,116 +1,300 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 
+// Restaurant logos - 10 popular chains
+const logos = {
+  chipotle: require('../../../assets/logos/chipotle.png'),
+  jerseymikes: require('../../../assets/logos/jerseymikes.png'),
+  panda: require('../../../assets/logos/panda.png'),
+  chickfila: require('../../../assets/logos/chickfila.png'),
+  subway: require('../../../assets/logos/subway.png'),
+  wendys: require('../../../assets/logos/wendys.png'),
+  mcdonalds: require('../../../assets/logos/mcdonalds.png'),
+  starbucks: require('../../../assets/logos/starbucks.png'),
+  burgerking: require('../../../assets/logos/burgerking.png'),
+  panera: require('../../../assets/logos/panera.jpg'),
+};
+
+const restaurantLogos = [
+  { key: 'chipotle' },
+  { key: 'jerseymikes' },
+  { key: 'panda' },
+  { key: 'chickfila' },
+  { key: 'subway' },
+  { key: 'wendys' },
+  { key: 'mcdonalds' },
+  { key: 'starbucks' },
+  { key: 'burgerking' },
+  { key: 'panera' },
+];
+
+const categories = [
+  { label: "Fast Food", icon: "fast-food-outline" },
+  { label: "Fine Dining", icon: "restaurant-outline" },
+  { label: "Cafes", icon: "cafe-outline" },
+  { label: "Healthy", icon: "leaf-outline" },
+  { label: "Asian", icon: "nutrition-outline" },
+  { label: "Mexican", icon: "flame-outline" },
+];
+
 export default function EveryRestaurantScreen({ navigation }) {
+  const [count, setCount] = useState(0);
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  // Animated counter - reaches 22M in 3 seconds
+  useEffect(() => {
+    const target = 22000000;
+    const duration = 3000;
+    let startTime = null;
+    let animationId = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-out cubic for smooth deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(target * eased));
+
+      if (progress < 1) {
+        animationId = requestAnimationFrame(animate);
+      }
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
+  }, []);
+
+  // Fade in and scale animation
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  // Auto-scroll logos
+  useEffect(() => {
+    const scrollLoop = () => {
+      scrollAnim.setValue(0);
+      Animated.timing(scrollAnim, {
+        toValue: 1,
+        duration: 15000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start(() => scrollLoop());
+    };
+    scrollLoop();
+  }, []);
+
+  const formatNumber = (num) => {
+    // Always show decimal for counting effect (e.g., "1.2M", "15.7M", "22M")
+    if (num >= 1000000) {
+      const millions = num / 1000000;
+      if (num >= 22000000) {
+        return '22M'; // Final state
+      }
+      return millions.toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+      return Math.floor(num / 1000) + 'K';
+    }
+    return num.toString();
+  };
+
+  const translateX = scrollAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -1040], // 10 logos * 104px (80 + 24 margin)
+  });
+
   return (
     <OnboardingLayout
       progress={12 / 20}
       onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('FavoriteSpots')}
     >
-      <Text style={styles.title}>MacroMenu has Every Restaurant in the world.</Text>
-      <Text style={styles.subtitle}>
-        MacroMenu has over 22 million restaurants. Bars, Fine Dining, Fast Food.
-      </Text>
+      <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
+        <Text style={styles.title}>Every Restaurant.{'\n'}One App.</Text>
 
-      <View style={styles.iconGrid}>
-        <View style={styles.iconRow}>
-          <View style={styles.iconBox}>
-            <Ionicons name="fast-food-outline" size={48} color="#000" />
-            <Text style={styles.iconLabel}>Fast Food</Text>
-          </View>
-          <View style={styles.iconBox}>
-            <Ionicons name="restaurant-outline" size={48} color="#000" />
-            <Text style={styles.iconLabel}>Fine Dining</Text>
-          </View>
+        {/* Animated Counter */}
+        <View style={styles.counterContainer}>
+          <Text style={styles.counterNumber}>{formatNumber(count)}+</Text>
+          <Text style={styles.counterLabel}>restaurants worldwide</Text>
         </View>
-        <View style={styles.iconRow}>
-          <View style={styles.iconBox}>
-            <Ionicons name="cafe-outline" size={48} color="#000" />
-            <Text style={styles.iconLabel}>Cafes</Text>
-          </View>
-          <View style={styles.iconBox}>
-            <Ionicons name="beer-outline" size={48} color="#000" />
-            <Text style={styles.iconLabel}>Bars</Text>
-          </View>
-        </View>
-        <View style={styles.iconRow}>
-          <View style={styles.iconBox}>
-            <Ionicons name="pizza-outline" size={48} color="#000" />
-            <Text style={styles.iconLabel}>Local Spots</Text>
-          </View>
-          <View style={styles.iconBox}>
-            <Ionicons name="globe-outline" size={48} color="#000" />
-            <Text style={styles.iconLabel}>Worldwide</Text>
-          </View>
-        </View>
-      </View>
 
-      <View style={styles.statContainer}>
-        <Text style={styles.statNumber}>22M+</Text>
-        <Text style={styles.statLabel}>Restaurants</Text>
-      </View>
+        {/* Scrolling Restaurant Logos */}
+        <View style={styles.logoScrollContainer}>
+          <Animated.View style={[styles.logoRow, { transform: [{ translateX }] }]}>
+            {[...restaurantLogos, ...restaurantLogos, ...restaurantLogos, ...restaurantLogos].map((restaurant, index) => (
+              <Image
+                key={index}
+                source={logos[restaurant.key]}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            ))}
+          </Animated.View>
+        </View>
+
+        {/* Category Chips (decorative) */}
+        <Text style={styles.categoryTitle}>Browse by category</Text>
+        <View style={styles.categoryContainer}>
+          {categories.map((category) => (
+            <View key={category.label} style={styles.categoryChip}>
+              <Ionicons name={category.icon} size={18} color="#333" />
+              <Text style={styles.categoryLabel}>{category.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Bottom Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Ionicons name="globe-outline" size={24} color="#4ADE80" />
+            <Text style={styles.statValue}>195</Text>
+            <Text style={styles.statLabel}>Countries</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Ionicons name="pizza-outline" size={24} color="#4ADE80" />
+            <Text style={styles.statValue}>500+</Text>
+            <Text style={styles.statLabel}>Cuisines</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Ionicons name="time-outline" size={24} color="#4ADE80" />
+            <Text style={styles.statValue}>24/7</Text>
+            <Text style={styles.statLabel}>Updated</Text>
+          </View>
+        </View>
+      </Animated.View>
     </OnboardingLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingTop: 20,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 8,
-    lineHeight: 36,
+    marginBottom: 24,
+    lineHeight: 40,
   },
-  subtitle: {
+  counterContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  counterNumber: {
+    fontSize: 56,
+    fontWeight: '800',
+    color: '#000',
+    letterSpacing: -2,
+  },
+  counterLabel: {
     fontSize: 16,
     color: '#666',
+    marginTop: 4,
+  },
+  logoScrollContainer: {
+    height: 60,
+    overflow: 'hidden',
+    marginBottom: 32,
+    marginHorizontal: -24,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  logoImage: {
+    width: 80,
+    height: 50,
+    marginRight: 24,
+  },
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#999',
     textAlign: 'center',
-    marginBottom: 40,
-    lineHeight: 24,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  iconGrid: {
-    marginBottom: 40,
+  categoryContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 32,
   },
-  iconRow: {
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 25,
+    gap: 6,
+  },
+  categoryLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
-  },
-  iconBox: {
-    width: 120,
-    height: 100,
+    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 10,
-  },
-  iconLabel: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 8,
-  },
-  statContainer: {
-    alignItems: 'center',
-    backgroundColor: '#000',
     paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 16,
-    alignSelf: 'center',
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  statNumber: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000',
+    marginTop: 6,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 4,
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#E5E5E5',
   },
 });
