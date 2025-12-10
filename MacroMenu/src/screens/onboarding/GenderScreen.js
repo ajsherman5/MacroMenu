@@ -10,14 +10,15 @@ const options = [
   { id: 'other', label: 'Other', icon: 'body-outline' },
 ];
 
-export default function GenderScreen({ navigation }) {
+export default function GenderScreen({ navigation, route }) {
   const [selected, setSelected] = useState(null);
+  const goal = route.params?.goal;
 
   return (
     <OnboardingLayout
       progress={5 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Height')}
+      onContinue={() => navigation.navigate('Height', { goal })}
       continueDisabled={!selected}
     >
       <Text style={styles.title}>Choose your Gender</Text>

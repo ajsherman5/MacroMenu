@@ -11,7 +11,19 @@ const CENTER_OFFSET = SCREEN_WIDTH / 2;
 
 export default function GoalWeightScreen({ navigation, route }) {
   const currentWeight = route?.params?.currentWeight || 150;
-  const [goalWeight, setGoalWeight] = useState(currentWeight + 10);
+  const goal = route?.params?.goal;
+
+  // Set initial goal weight based on goal type
+  const getInitialGoalWeight = () => {
+    if (goal === 'cut') {
+      return currentWeight - 10;
+    } else if (goal === 'bulk') {
+      return currentWeight + 10;
+    }
+    return currentWeight;
+  };
+
+  const [goalWeight, setGoalWeight] = useState(getInitialGoalWeight());
   const scrollRef = useRef(null);
   const initialScrollDone = useRef(false);
 
@@ -46,7 +58,7 @@ export default function GoalWeightScreen({ navigation, route }) {
     <OnboardingLayout
       progress={8 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Timeline')}
+      onContinue={() => navigation.navigate('Timeline', { goal, currentWeight, goalWeight })}
     >
       <Text style={styles.title}>What's your goal weight?</Text>
       <Text style={styles.subtitle}>

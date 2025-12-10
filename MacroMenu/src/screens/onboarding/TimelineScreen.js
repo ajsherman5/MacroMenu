@@ -12,7 +12,8 @@ const options = [
   { id: 'custom', label: 'Custom' },
 ];
 
-export default function TimelineScreen({ navigation }) {
+export default function TimelineScreen({ navigation, route }) {
+  const goal = route.params?.goal;
   const [selected, setSelected] = useState(null);
   const [customWeeks, setCustomWeeks] = useState('');
   const insets = useSafeAreaInsets();
@@ -110,7 +111,7 @@ export default function TimelineScreen({ navigation }) {
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity
             style={[styles.button, !isValid && styles.buttonDisabled]}
-            onPress={() => navigation.navigate('ActivityLevel')}
+            onPress={() => navigation.navigate('ActivityLevel', { goal })}
             disabled={!isValid}
           >
             <Text style={[styles.buttonText, !isValid && styles.buttonTextDisabled]}>

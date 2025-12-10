@@ -9,7 +9,8 @@ const TICK_SPACING = 6;
 const TOTAL_TICKS = MAX_WEIGHT - MIN_WEIGHT + 1;
 const CENTER_OFFSET = SCREEN_WIDTH / 2;
 
-export default function WeightScreen({ navigation }) {
+export default function WeightScreen({ navigation, route }) {
+  const goal = route.params?.goal;
   const [weight, setWeight] = useState(150);
   const scrollRef = useRef(null);
   const initialScrollDone = useRef(false);
@@ -41,7 +42,14 @@ export default function WeightScreen({ navigation }) {
     <OnboardingLayout
       progress={7 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('GoalWeight', { currentWeight: weight })}
+      onContinue={() => {
+        // For maintain goal, skip goal weight and timeline screens
+        if (goal === 'maintain') {
+          navigation.navigate('ActivityLevel', { goal, currentWeight: weight });
+        } else {
+          navigation.navigate('GoalWeight', { goal, currentWeight: weight });
+        }
+      }}
     >
       <Text style={styles.title}>What's your current weight?</Text>
 

@@ -11,7 +11,8 @@ const feet = [3, 4, 5, 6, 7, 8];
 const inches = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const cmValues = Array.from({ length: 121 }, (_, i) => 100 + i); // 100cm to 220cm
 
-export default function HeightScreen({ navigation }) {
+export default function HeightScreen({ navigation, route }) {
+  const goal = route.params?.goal;
   const [useCm, setUseCm] = useState(false);
   const [selectedFeet, setSelectedFeet] = useState(5);
   const [selectedInches, setSelectedInches] = useState(10);
@@ -95,7 +96,7 @@ export default function HeightScreen({ navigation }) {
     <OnboardingLayout
       progress={6 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Weight')}
+      onContinue={() => navigation.navigate('Weight', { goal })}
     >
       <Text style={styles.title}>Tell us about you</Text>
       <Text style={styles.subtitle}>
