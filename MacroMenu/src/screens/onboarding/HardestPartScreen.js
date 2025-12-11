@@ -4,8 +4,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
 
-const options = [
-  { id: 'calories', label: 'Finding high-calorie affordable meals', icon: 'fire', iconType: 'material' },
+const getOptions = (goal) => [
+  { id: 'calories', label: goal === 'cut' ? 'Finding low-calorie affordable meals' : goal === 'maintain' ? 'Finding calorie-conscious affordable meals' : 'Finding high-calorie affordable meals', icon: 'fire', iconType: 'material' },
   { id: 'protein', label: 'Getting enough protein', icon: 'food-turkey', iconType: 'material' },
   { id: 'healthy', label: "Don't know the healthy options", icon: 'food-apple-outline', iconType: 'material' },
 ];
@@ -13,6 +13,7 @@ const options = [
 export default function HardestPartScreen({ navigation, route }) {
   const [selected, setSelected] = useState([]);
   const goal = route.params?.goal;
+  const options = getOptions(goal);
 
   const toggle = (id) => {
     if (selected.includes(id)) {

@@ -3,31 +3,27 @@ import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 
-// Restaurant logos - 10 popular chains
+// Restaurant logos - 8 premium casual chains
 const logos = {
   chipotle: require('../../../assets/logos/chipotle.png'),
-  jerseymikes: require('../../../assets/logos/jerseymikes.png'),
-  panda: require('../../../assets/logos/panda.png'),
+  shakeshack: require('../../../assets/logos/shakeshack.png'),
+  jerseymikes: require('../../../assets/logos/jerseysmikes.png'),
+  whataburger: require('../../../assets/logos/whataburger.png'),
+  buffalowildwings: require('../../../assets/logos/buffalowildwings.png'),
+  sonic: require('../../../assets/logos/sonic.png'),
   chickfila: require('../../../assets/logos/chickfila.png'),
-  subway: require('../../../assets/logos/subway.png'),
-  wendys: require('../../../assets/logos/wendys.png'),
-  mcdonalds: require('../../../assets/logos/mcdonalds.png'),
-  starbucks: require('../../../assets/logos/starbucks.png'),
-  burgerking: require('../../../assets/logos/burgerking.png'),
-  panera: require('../../../assets/logos/panera.jpg'),
+  cava: require('../../../assets/logos/Cava-Logo.png'),
 };
 
 const restaurantLogos = [
   { key: 'chipotle' },
+  { key: 'shakeshack' },
   { key: 'jerseymikes' },
-  { key: 'panda' },
+  { key: 'whataburger' },
+  { key: 'buffalowildwings' },
+  { key: 'sonic' },
   { key: 'chickfila' },
-  { key: 'subway' },
-  { key: 'wendys' },
-  { key: 'mcdonalds' },
-  { key: 'starbucks' },
-  { key: 'burgerking' },
-  { key: 'panera' },
+  { key: 'cava' },
 ];
 
 const categories = [
@@ -121,7 +117,7 @@ export default function EveryRestaurantScreen({ navigation }) {
 
   const translateX = scrollAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -1040], // 10 logos * 104px (80 + 24 margin)
+    outputRange: [0, -832], // 8 logos * 104px (80 + 24 margin)
   });
 
   return (
