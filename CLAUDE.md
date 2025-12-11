@@ -211,9 +211,91 @@ Major implementation sprint completing Phases 1-6:
 
 ---
 
-## Next Steps
-1. **Phase 7: RevenueCat** - Subscription management
-2. **Phase 8: App Store** - Icons, screenshots, TestFlight, submission
+## Current TODO List (Pick up here!)
+
+### COMPLETED
+- [x] Phase 1: Create React Context files (UserContext, OnboardingContext, AuthContext)
+- [x] Phase 1: Create AsyncStorage service and install package
+- [x] Phase 1: Update App.js with context providers
+- [x] Phase 2: Set up Supabase Auth
+- [x] Phase 3: Integrate Nutritionix API
+- [x] Phase 4: Create match score algorithm
+- [x] Phase 5.1: Connect onboarding screens to context
+- [x] Phase 5.2: Connect main screens to real data
+- [x] Phase 6: Add DoorDash/Uber Eats deep linking
+
+### NEXT UP
+- [ ] **Phase 7: Integrate RevenueCat subscriptions**
+  - Install react-native-purchases
+  - Create RevenueCat account and configure products
+  - Create src/services/revenuecat.js
+  - Update PaywallScreen with real purchases
+  - Add subscription status to AuthContext
+
+- [ ] **Phase 8: App Store preparation**
+  - Create app icons (1024x1024)
+  - Take screenshots for App Store listing
+  - Create privacy policy & terms of service URLs
+  - Update app.json with bundle IDs, permissions
+  - TestFlight beta testing
+  - App Store submission
+
+---
+
+## Full Implementation Plan
+
+### Phase 7: RevenueCat Subscriptions (Details)
+
+**Install:**
+```bash
+npx expo install react-native-purchases
+```
+
+**New Files:**
+- `src/services/revenuecat.js` - Subscription management
+
+**Modify:**
+- `PaywallScreen.js` - Connect to real purchases
+- `AuthContext.js` - Add subscription status
+
+**RevenueCat Setup Required:**
+1. Create account at https://www.revenuecat.com
+2. Create new project
+3. Add iOS app with bundle ID
+4. Configure products (monthly, yearly)
+5. Get API key for app
+
+### Phase 8: App Store Prep (Details)
+
+**Assets Needed:**
+- App icon: 1024x1024 PNG (no transparency)
+- Screenshots: iPhone 6.7" (1290x2796), iPhone 6.5" (1284x2778)
+- App preview video (optional)
+
+**app.json Updates:**
+```json
+{
+  "ios": {
+    "bundleIdentifier": "com.macromenu.app",
+    "buildNumber": "1",
+    "supportsTablet": false
+  }
+}
+```
+
+**Legal:**
+- Privacy Policy URL
+- Terms of Service URL
+- Support email
+
+---
+
+## User Preferences (Remember These!)
+
+- **Auth preference:** Supabase (user has experience with it, NOT Firebase)
+- **Goal:** Get to App Store as fast as possible
+- **Monetization:** Subscriptions via RevenueCat + affiliate ordering links
+- **Design:** Dark mode, green accent (#4ADE80)
 
 ---
 
