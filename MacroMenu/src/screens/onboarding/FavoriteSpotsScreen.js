@@ -1,22 +1,38 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
+import { useOnboarding } from '../../context';
+
+const logos = {
+  chipotle: require('../../../assets/logos/chipotle.png'),
+  wendys: require('../../../assets/logos/wendys.png'),
+  mcdonalds: require('../../../assets/logos/mcdonalds.png'),
+  chickfila: require('../../../assets/logos/chickfila.png'),
+  subway: require('../../../assets/logos/subway.png'),
+  starbucks: require('../../../assets/logos/starbucks.png'),
+};
 
 const popularSpots = [
-  { id: 'chipotle', name: 'Chipotle', icon: 'restaurant' },
-  { id: 'wendys', name: "Wendy's", icon: 'fast-food' },
+  { id: 'chipotle', name: 'Chipotle', hasLogo: true },
+  { id: 'wendys', name: "Wendy's", hasLogo: true },
   { id: 'tacobell', name: 'Taco Bell', icon: 'restaurant' },
   { id: 'panera', name: 'Panera', icon: 'cafe' },
-  { id: 'mcdonalds', name: "McDonald's", icon: 'fast-food' },
-  { id: 'chickfila', name: 'Chick-fil-A', icon: 'restaurant' },
-  { id: 'subway', name: 'Subway', icon: 'restaurant' },
-  { id: 'starbucks', name: 'Starbucks', icon: 'cafe' },
+  { id: 'mcdonalds', name: "McDonald's", hasLogo: true },
+  { id: 'chickfila', name: 'Chick-fil-A', hasLogo: true },
+  { id: 'subway', name: 'Subway', hasLogo: true },
+  { id: 'starbucks', name: 'Starbucks', hasLogo: true },
 ];
 
 export default function FavoriteSpotsScreen({ navigation }) {
   const [selected, setSelected] = useState([]);
   const [search, setSearch] = useState('');
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    updateOnboarding({ favoriteRestaurants: selected });
+    navigation.navigate('FoodLikes');
+  };
 
   const toggle = (id) => {
     if (selected.includes(id)) {
@@ -34,7 +50,7 @@ export default function FavoriteSpotsScreen({ navigation }) {
     <OnboardingLayout
       progress={13 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('FoodLikes')}
+      onContinue={handleContinue}
       continueDisabled={selected.length === 0}
     >
       <Text style={styles.title}>Pick your favorite spots</Text>
@@ -60,7 +76,11 @@ export default function FavoriteSpotsScreen({ navigation }) {
             activeOpacity={0.7}
           >
             <View style={styles.spotIcon}>
-              <Ionicons name={spot.icon} size={24} color="#666" />
+              {spot.hasLogo && logos[spot.id] ? (
+                <Image source={logos[spot.id]} style={styles.spotLogo} resizeMode="contain" />
+              ) : (
+                <Ionicons name={spot.icon} size={24} color="#666" />
+              )}
             </View>
             <View style={styles.spotInfo}>
               <Text style={styles.spotName}>{spot.name}</Text>
@@ -130,6 +150,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
+    overflow: 'hidden',
+  },
+  spotLogo: {
+    width: 36,
+    height: 36,
   },
   spotInfo: {
     flex: 1,

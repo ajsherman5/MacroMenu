@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const options = [
   { id: 'male', label: 'Male', icon: 'male-outline' },
@@ -13,12 +14,18 @@ const options = [
 export default function GenderScreen({ navigation, route }) {
   const [selected, setSelected] = useState(null);
   const goal = route.params?.goal;
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    updateOnboarding({ gender: selected });
+    navigation.navigate('Height', { goal });
+  };
 
   return (
     <OnboardingLayout
       progress={5 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Height', { goal })}
+      onContinue={handleContinue}
       continueDisabled={!selected}
     >
       <Text style={styles.title}>Choose your Gender</Text>

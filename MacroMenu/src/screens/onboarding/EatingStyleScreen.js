@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const options = [
   { id: 'none', label: 'No preference', subtitle: 'Balanced diet', icon: 'restaurant-outline' },
@@ -14,12 +15,18 @@ const options = [
 
 export default function EatingStyleScreen({ navigation }) {
   const [selected, setSelected] = useState(null);
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    updateOnboarding({ eatingStyle: selected });
+    navigation.navigate('EveryRestaurant');
+  };
 
   return (
     <OnboardingLayout
       progress={11 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('EveryRestaurant')}
+      onContinue={handleContinue}
       continueDisabled={!selected}
     >
       <Text style={styles.title}>Which best describes your eating style?</Text>

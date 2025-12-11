@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const options = [
   { id: 'sedentary', label: 'Sedentary', subtitle: 'No activity', icon: 'person-outline' },
@@ -14,12 +15,18 @@ const options = [
 
 export default function ActivityLevelScreen({ navigation }) {
   const [selected, setSelected] = useState(null);
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    updateOnboarding({ activityLevel: selected });
+    navigation.navigate('EatingStyle');
+  };
 
   return (
     <OnboardingLayout
       progress={10 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('EatingStyle')}
+      onContinue={handleContinue}
       continueDisabled={!selected}
     >
       <Text style={styles.title}>Activity Level</Text>

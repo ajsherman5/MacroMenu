@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const getOptions = (goal) => [
   { id: 'calories', label: goal === 'cut' ? 'Finding low-calorie affordable meals' : goal === 'maintain' ? 'Finding calorie-conscious affordable meals' : 'Finding high-calorie affordable meals', icon: 'fire', iconType: 'material' },
@@ -14,6 +15,7 @@ export default function HardestPartScreen({ navigation, route }) {
   const [selected, setSelected] = useState([]);
   const goal = route.params?.goal;
   const options = getOptions(goal);
+  const { updateOnboarding } = useOnboarding();
 
   const toggle = (id) => {
     if (selected.includes(id)) {
@@ -23,11 +25,16 @@ export default function HardestPartScreen({ navigation, route }) {
     }
   };
 
+  const handleContinue = () => {
+    updateOnboarding({ hardestPart: selected });
+    navigation.navigate('HowDecide', { goal });
+  };
+
   return (
     <OnboardingLayout
       progress={2 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('HowDecide', { goal })}
+      onContinue={handleContinue}
       continueDisabled={selected.length === 0}
     >
       <Text style={styles.title}>When you eat out, what's the hardest part?</Text>

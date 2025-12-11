@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Keyboard, Platform
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const options = [
   { id: '4', label: '4 weeks' },
@@ -18,6 +19,13 @@ export default function TimelineScreen({ navigation, route }) {
   const [customWeeks, setCustomWeeks] = useState('');
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef(null);
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    const timeline = selected === 'custom' ? customWeeks : selected;
+    updateOnboarding({ timeline });
+    navigation.navigate('ActivityLevel', { goal });
+  };
 
   const handleSelect = (id) => {
     setSelected(id);
@@ -25,10 +33,14 @@ export default function TimelineScreen({ navigation, route }) {
       setCustomWeeks('');
       Keyboard.dismiss();
     } else {
-      // Scroll to bottom when custom is selected so input clears the keyboard
+      // Scroll to make custom card fully visible above the continue button
+      // First scroll happens after state update, second ensures it reaches the end
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 300);
+      }, 100);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 400);
     }
   };
 
@@ -120,7 +132,7 @@ export default function TimelineScreen({ navigation, route }) {
           <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
             <TouchableOpacity
               style={[styles.button, !isValid && styles.buttonDisabled]}
-              onPress={() => navigation.navigate('ActivityLevel', { goal })}
+              onPress={handleContinue}
               disabled={!isValid}
             >
               <Text style={[styles.buttonText, !isValid && styles.buttonTextDisabled]}>

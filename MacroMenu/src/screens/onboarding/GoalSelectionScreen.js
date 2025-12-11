@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { useOnboarding } from '../../context';
 
 const goals = [
   {
@@ -29,6 +30,14 @@ const goals = [
 
 export default function GoalSelectionScreen({ navigation }) {
   const [selected, setSelected] = useState(null);
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    if (selected) {
+      updateOnboarding({ goal: selected });
+      navigation.navigate('DaysEatingOut', { goal: selected });
+    }
+  };
 
   const renderIcon = (goal) => {
     if (goal.iconType === 'material') {
@@ -88,7 +97,7 @@ export default function GoalSelectionScreen({ navigation }) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.button, !selected && styles.buttonDisabled]}
-          onPress={() => selected && navigation.navigate('DaysEatingOut', { goal: selected })}
+          onPress={handleContinue}
           disabled={!selected}
         >
           <Text style={[styles.buttonText, !selected && styles.buttonTextDisabled]}>

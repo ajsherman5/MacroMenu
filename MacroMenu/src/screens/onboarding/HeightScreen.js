@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import OnboardingLayout from '../../components/OnboardingLayout';
+import { useOnboarding } from '../../context';
 
 const ITEM_HEIGHT = 50;
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -18,6 +19,16 @@ export default function HeightScreen({ navigation, route }) {
   const [selectedInches, setSelectedInches] = useState(10);
   const [selectedCm, setSelectedCm] = useState(178);
   const [isReady, setIsReady] = useState(false);
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    // Store height in inches for consistency
+    const heightInInches = useCm
+      ? Math.round(selectedCm / 2.54)
+      : (selectedFeet * 12) + selectedInches;
+    updateOnboarding({ height: heightInInches });
+    navigation.navigate('Weight', { goal });
+  };
 
   const feetScrollRef = useRef(null);
   const inchesScrollRef = useRef(null);
@@ -96,7 +107,7 @@ export default function HeightScreen({ navigation, route }) {
     <OnboardingLayout
       progress={6 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Weight', { goal })}
+      onContinue={handleContinue}
     >
       <Text style={styles.title}>Tell us about you</Text>
       <Text style={styles.subtitle}>

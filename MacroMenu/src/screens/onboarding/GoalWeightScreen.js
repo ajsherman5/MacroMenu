@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import OnboardingLayout from '../../components/OnboardingLayout';
+import { useOnboarding } from '../../context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MIN_WEIGHT = 80;
@@ -12,6 +13,7 @@ const CENTER_OFFSET = SCREEN_WIDTH / 2;
 export default function GoalWeightScreen({ navigation, route }) {
   const currentWeight = route?.params?.currentWeight || 150;
   const goal = route?.params?.goal;
+  const { updateOnboarding } = useOnboarding();
 
   // Set initial goal weight based on goal type
   const getInitialGoalWeight = () => {
@@ -26,6 +28,11 @@ export default function GoalWeightScreen({ navigation, route }) {
   const [goalWeight, setGoalWeight] = useState(getInitialGoalWeight());
   const scrollRef = useRef(null);
   const initialScrollDone = useRef(false);
+
+  const handleContinue = () => {
+    updateOnboarding({ goalWeight });
+    navigation.navigate('Timeline', { goal, currentWeight, goalWeight });
+  };
 
   const diff = goalWeight - currentWeight;
   const isGaining = diff > 0;
@@ -58,7 +65,7 @@ export default function GoalWeightScreen({ navigation, route }) {
     <OnboardingLayout
       progress={8 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Timeline', { goal, currentWeight, goalWeight })}
+      onContinue={handleContinue}
     >
       <Text style={styles.title}>What's your goal weight?</Text>
       <Text style={styles.subtitle}>

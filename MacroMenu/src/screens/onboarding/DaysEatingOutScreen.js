@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const options = [
   { id: '1-2', label: '1-2 Days' },
@@ -13,12 +14,18 @@ const options = [
 export default function DaysEatingOutScreen({ navigation, route }) {
   const [selected, setSelected] = useState(null);
   const goal = route.params?.goal;
+  const { updateOnboarding } = useOnboarding();
+
+  const handleContinue = () => {
+    updateOnboarding({ daysEatingOut: selected });
+    navigation.navigate('HardestPart', { goal });
+  };
 
   return (
     <OnboardingLayout
       progress={1 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('HardestPart', { goal })}
+      onContinue={handleContinue}
       continueDisabled={!selected}
     >
       <Text style={styles.title}>How many days per week do you eat out?</Text>

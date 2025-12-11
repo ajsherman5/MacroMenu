@@ -26,13 +26,10 @@ const restaurantLogos = [
   { key: 'cava' },
 ];
 
-const categories = [
-  { label: "Fast Food", icon: "fast-food-outline" },
-  { label: "Fine Dining", icon: "restaurant-outline" },
-  { label: "Cafes", icon: "cafe-outline" },
-  { label: "Healthy", icon: "leaf-outline" },
-  { label: "Asian", icon: "nutrition-outline" },
-  { label: "Mexican", icon: "flame-outline" },
+const features = [
+  { label: "AI-Powered Picks", icon: "sparkles", description: "Meals matched to your goals" },
+  { label: "Real-time Nutrition", icon: "nutrition-outline", description: "Accurate macro data" },
+  { label: "Any Diet, Any Goal", icon: "checkmark-circle-outline", description: "Keto, bulk, cut & more" },
 ];
 
 export default function EveryRestaurantScreen({ navigation }) {
@@ -149,13 +146,15 @@ export default function EveryRestaurantScreen({ navigation }) {
           </Animated.View>
         </View>
 
-        {/* Category Chips (decorative) */}
-        <Text style={styles.categoryTitle}>Browse by category</Text>
-        <View style={styles.categoryContainer}>
-          {categories.map((category) => (
-            <View key={category.label} style={styles.categoryChip}>
-              <Ionicons name={category.icon} size={18} color="#333" />
-              <Text style={styles.categoryLabel}>{category.label}</Text>
+        {/* Feature Highlights */}
+        <View style={styles.featuresContainer}>
+          {features.map((feature) => (
+            <View key={feature.label} style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Ionicons name={feature.icon} size={22} color="#4ADE80" />
+              </View>
+              <Text style={styles.featureLabel}>{feature.label}</Text>
+              <Text style={styles.featureDescription}>{feature.description}</Text>
             </View>
           ))}
         </View>
@@ -229,35 +228,46 @@ const styles = StyleSheet.create({
     height: 50,
     marginRight: 24,
   },
-  categoryTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  categoryContainer: {
+  featuresContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
     marginBottom: 32,
+    gap: 12,
   },
-  categoryChip: {
-    flexDirection: 'row',
+  featureCard: {
+    flex: 1,
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    gap: 6,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  categoryLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
+  featureIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E8FBF0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  featureLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 14,
   },
   statsRow: {
     flexDirection: 'row',

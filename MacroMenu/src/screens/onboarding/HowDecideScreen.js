@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import OptionCard from '../../components/OptionCard';
+import { useOnboarding } from '../../context';
 
 const options = [
   { id: 'looks', label: 'Whatever looks good', icon: 'eye-outline' },
@@ -14,6 +15,7 @@ const options = [
 export default function HowDecideScreen({ navigation, route }) {
   const [selected, setSelected] = useState([]);
   const goal = route.params?.goal;
+  const { updateOnboarding } = useOnboarding();
 
   const toggle = (id) => {
     if (selected.includes(id)) {
@@ -23,11 +25,16 @@ export default function HowDecideScreen({ navigation, route }) {
     }
   };
 
+  const handleContinue = () => {
+    updateOnboarding({ howDecide: selected });
+    navigation.navigate('HeresTheTruth', { goal });
+  };
+
   return (
     <OnboardingLayout
       progress={3 / 20}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('HeresTheTruth', { goal })}
+      onContinue={handleContinue}
       continueDisabled={selected.length === 0}
     >
       <Text style={styles.title}>How do you usually decide what to order?</Text>
