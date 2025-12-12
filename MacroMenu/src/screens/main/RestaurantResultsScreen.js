@@ -1,36 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../context/UserContext';
-import { searchBrandedFoods, POPULAR_BRANDS } from '../../services/api/nutritionix';
+import { searchBrandedFoods } from '../../services/api/nutritionix';
 
-// Restaurant icons mapping
-const RESTAURANT_ICONS = {
-  chipotle: '🌯',
-  mcdonalds: '🍔',
-  subway: '🥪',
-  'chick-fil-a': '🍗',
-  chickfila: '🍗',
-  wendys: '🍔',
-  'taco bell': '🌮',
-  tacobell: '🌮',
-  panera: '🥖',
-  'panera bread': '🥖',
-  starbucks: '☕',
-  sweetgreen: '🥗',
-  'shake shack': '🍔',
-  shakeshack: '🍔',
-  'buffalo wild wings': '🍗',
-  cava: '🥙',
-  'jersey mikes': '🥪',
-  whataburger: '🍔',
-  sonic: '🍔',
-  default: '🍽️',
+// Restaurant logos
+const logos = {
+  chipotle: require('../../../assets/logos/chipotle.png'),
+  shakeshack: require('../../../assets/logos/shakeshack.png'),
+  jerseymikes: require('../../../assets/logos/jerseysmikes.png'),
+  whataburger: require('../../../assets/logos/whataburger.png'),
+  buffalowildwings: require('../../../assets/logos/buffalowildwings.png'),
+  sonic: require('../../../assets/logos/sonic.png'),
+  chickfila: require('../../../assets/logos/chickfila.png'),
+  cava: require('../../../assets/logos/Cava-Logo.png'),
 };
 
-function getRestaurantIcon(name) {
-  const normalized = name.toLowerCase().replace(/[^a-z ]/g, '');
-  return RESTAURANT_ICONS[normalized] || RESTAURANT_ICONS.default;
+function getRestaurantLogo(name) {
+  const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+  return logos[normalized] || null;
 }
 
 // Popular restaurant list with categories
@@ -55,7 +44,7 @@ const POPULAR_RESTAURANTS = [
 const FILTER_CATEGORIES = ['All', 'Fast Food', 'Healthy', 'Mexican', 'American', 'Cafe'];
 
 export default function RestaurantResultsScreen({ navigation, route }) {
-  const { user, addRecentRestaurant } = useUser();
+  const { addRecentRestaurant } = useUser();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
@@ -74,10 +63,7 @@ export default function RestaurantResultsScreen({ navigation, route }) {
 
     try {
       if (searchQuery) {
-        // Search via API
         const results = await searchBrandedFoods(searchQuery);
-
-        // Group by brand_name to get unique restaurants
         const brandMap = new Map();
         results.forEach((item) => {
           if (item.brand_name && !brandMap.has(item.brand_name)) {
@@ -89,10 +75,8 @@ export default function RestaurantResultsScreen({ navigation, route }) {
             });
           }
         });
-
         setRestaurants(Array.from(brandMap.values()));
       } else {
-        // Show popular restaurants
         setRestaurants(POPULAR_RESTAURANTS);
       }
     } catch (err) {
@@ -115,16 +99,18 @@ export default function RestaurantResultsScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>
-          {searchQuery ? `Results for "${searchQuery}"` : 'Popular Restaurants'}
+        <Text style={styles.title} numberOfLines={1}>
+          {searchQuery ? `"${searchQuery}"` : 'Popular Restaurants'}
         </Text>
-        <View style={{ width: 50 }} />
+        <View style={{ width: 40 }} />
       </View>
 
+      {/* Filter chips */}
       {!searchQuery && (
         <ScrollView
           horizontal
@@ -136,8 +122,8 @@ export default function RestaurantResultsScreen({ navigation, route }) {
             <TouchableOpacity
               key={category}
               style={[
-                styles.filter,
-                activeFilter === category && styles.filterActive,
+                styles.filterChip,
+                activeFilter === category && styles.filterChipActive,
               ]}
               onPress={() => setActiveFilter(category)}
             >
@@ -156,45 +142,60 @@ export default function RestaurantResultsScreen({ navigation, route }) {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4ADE80" />
+          <ActivityIndicator size="large" color="#000" />
           <Text style={styles.loadingText}>Finding restaurants...</Text>
         </View>
       ) : (
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           {error && (
-            <Text style={styles.errorText}>{error}</Text>
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle-outline" size={18} color="#F59E0B" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           )}
 
           <Text style={styles.resultCount}>
             {filteredRestaurants.length} restaurant{filteredRestaurants.length !== 1 ? 's' : ''} found
           </Text>
 
-          {filteredRestaurants.map((restaurant, index) => (
-            <TouchableOpacity
-              key={restaurant.id || index}
-              style={styles.card}
-              onPress={() => handleRestaurantPress(restaurant)}
-            >
-              <Text style={styles.cardIcon}>{getRestaurantIcon(restaurant.name)}</Text>
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardName}>{restaurant.name}</Text>
+          {filteredRestaurants.map((restaurant, index) => {
+            const logo = getRestaurantLogo(restaurant.name);
+            return (
+              <TouchableOpacity
+                key={restaurant.id || index}
+                style={styles.card}
+                onPress={() => handleRestaurantPress(restaurant)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.cardIcon}>
+                  {logo ? (
+                    <Image source={logo} style={styles.cardLogo} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="restaurant-outline" size={24} color="#666" />
+                  )}
                 </View>
-                <Text style={styles.cardMeta}>{restaurant.type}</Text>
-              </View>
-              <Text style={styles.cardArrow}>→</Text>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardName}>{restaurant.name}</Text>
+                  <Text style={styles.cardMeta}>{restaurant.type}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
+              </TouchableOpacity>
+            );
+          })}
 
           {filteredRestaurants.length === 0 && !loading && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🔍</Text>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="search-outline" size={48} color="#999" />
+              </View>
               <Text style={styles.emptyTitle}>No restaurants found</Text>
               <Text style={styles.emptySubtitle}>
                 Try a different search or browse popular options
               </Text>
             </View>
           )}
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -204,25 +205,30 @@ export default function RestaurantResultsScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F9F9F9',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingTop: 8,
     paddingBottom: 16,
   },
   backButton: {
-    color: '#4ADE80',
-    fontSize: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
+    flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
-    flex: 1,
+    color: '#000',
     textAlign: 'center',
+    marginHorizontal: 8,
   },
   filterScroll: {
     maxHeight: 50,
@@ -230,25 +236,27 @@ const styles = StyleSheet.create({
   filterRow: {
     paddingHorizontal: 24,
     paddingBottom: 16,
-    gap: 8,
   },
-  filter: {
+  filterChip: {
     marginRight: 8,
-    backgroundColor: '#1F1F1F',
+    backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  filterActive: {
-    backgroundColor: '#4ADE80',
+  filterChipActive: {
+    backgroundColor: '#000',
+    borderColor: '#000',
   },
   filterText: {
-    color: '#9CA3AF',
+    color: '#666',
     fontSize: 14,
+    fontWeight: '500',
   },
   filterTextActive: {
-    color: '#000',
-    fontSize: 14,
+    color: '#fff',
     fontWeight: '600',
   },
   loadingContainer: {
@@ -257,76 +265,95 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: '#666',
     fontSize: 16,
-    marginTop: 12,
+    marginTop: 16,
   },
   scroll: {
     flex: 1,
     paddingHorizontal: 24,
   },
-  errorText: {
-    color: '#F59E0B',
-    fontSize: 14,
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 16,
-    textAlign: 'center',
+  },
+  errorText: {
+    color: '#92400E',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
   },
   resultCount: {
-    color: '#9CA3AF',
+    color: '#666',
     fontSize: 14,
     marginBottom: 16,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardIcon: {
-    fontSize: 40,
-    marginRight: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    overflow: 'hidden',
+  },
+  cardLogo: {
+    width: 36,
+    height: 36,
   },
   cardContent: {
     flex: 1,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
   cardName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
   },
   cardMeta: {
-    color: '#9CA3AF',
+    color: '#999',
     fontSize: 14,
-  },
-  cardArrow: {
-    fontSize: 18,
-    color: '#9CA3AF',
+    marginTop: 2,
   },
   emptyState: {
     alignItems: 'center',
     paddingVertical: 48,
   },
   emptyIcon: {
-    fontSize: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
     textAlign: 'center',
   },
 });

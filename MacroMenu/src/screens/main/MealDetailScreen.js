@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../context/UserContext';
 import { calculateDailyFit } from '../../utils/matchScore';
-import { calculateUserMacros, calculatePerMealMacros } from '../../utils/macroCalculator';
+import { calculateUserMacros } from '../../utils/macroCalculator';
 import { openDoorDash, openUberEats, openMaps, copyOrderToClipboard, getOrderingOptions } from '../../services/deepLink';
 
 function getMatchColor(score) {
-  if (score >= 85) return '#4ADE80';
+  if (score >= 85) return '#22C55E';
   if (score >= 70) return '#F59E0B';
   return '#EF4444';
 }
 
+function getMatchBg(score) {
+  if (score >= 85) return '#DCFCE7';
+  if (score >= 70) return '#FEF3C7';
+  return '#FEE2E2';
+}
+
 export default function MealDetailScreen({ navigation, route }) {
   const { user } = useUser();
+  const insets = useSafeAreaInsets();
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderingOptions, setOrderingOptions] = useState([]);
 
@@ -28,7 +36,6 @@ export default function MealDetailScreen({ navigation, route }) {
   const restaurant = route?.params?.restaurant || { name: 'Restaurant' };
   const userTargets = route?.params?.userTargets;
 
-  // Get user's daily macros for "how this fits your day"
   const getDailyMacros = () => {
     if (user.macros?.calories) {
       return user.macros;
@@ -50,13 +57,11 @@ export default function MealDetailScreen({ navigation, route }) {
   const dailyMacros = getDailyMacros();
   const dailyFit = calculateDailyFit(meal, dailyMacros);
 
-  // Generate healthify tips based on meal composition and user goal
   const getHealthifyTips = () => {
     const tips = [];
     const goal = user.profile?.goal;
 
     if (goal === 'cut') {
-      // Cutting tips - reduce calories
       if (meal.carbs > 50) {
         tips.push({ tip: 'Ask for no rice/bread', saves: `-${Math.round(meal.carbs * 0.4 * 4)} cal` });
       }
@@ -67,14 +72,12 @@ export default function MealDetailScreen({ navigation, route }) {
         tips.push({ tip: 'Order half portion', saves: `-${Math.round(meal.calories * 0.5)} cal` });
       }
     } else if (goal === 'bulk') {
-      // Bulking tips - add protein/calories
       tips.push({ tip: 'Add double protein', adds: `+25-35g protein` });
       if (meal.carbs < 60) {
         tips.push({ tip: 'Add extra rice/bread', adds: `+150-200 cal` });
       }
       tips.push({ tip: 'Add avocado/guac', adds: `+150 cal, healthy fats` });
     } else {
-      // Maintenance tips - balance
       if (meal.protein < 25) {
         tips.push({ tip: 'Add grilled chicken', adds: `+25g protein` });
       }
@@ -83,12 +86,11 @@ export default function MealDetailScreen({ navigation, route }) {
       }
     }
 
-    // Always include these general tips if relevant
     if (meal.protein < (userTargets?.protein || 40)) {
       tips.push({ tip: 'Add a side of eggs', adds: `+12g protein` });
     }
 
-    return tips.slice(0, 3); // Max 3 tips
+    return tips.slice(0, 3);
   };
 
   const healthifyTips = getHealthifyTips();
@@ -133,17 +135,31 @@ export default function MealDetailScreen({ navigation, route }) {
     }
   };
 
+  const getTipsTitle = () => {
+    switch (user.profile?.goal) {
+      case 'bulk':
+        return 'Bulk It Up';
+      case 'cut':
+        return 'Lean It Out';
+      default:
+        return 'Healthify Tips';
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Meal Header */}
         <View style={styles.mealHeader}>
-          <View style={[styles.matchBadge, { backgroundColor: `${getMatchColor(meal.matchScore || 80)}20` }]}>
+          <View style={[styles.matchBadge, { backgroundColor: getMatchBg(meal.matchScore || 80) }]}>
             <Text style={[styles.matchText, { color: getMatchColor(meal.matchScore || 80) }]}>
               {meal.matchScore || 80}% match
             </Text>
@@ -155,50 +171,65 @@ export default function MealDetailScreen({ navigation, route }) {
           )}
         </View>
 
-        <View style={styles.macrosCard}>
-          <Text style={styles.macrosTitle}>Nutrition Facts</Text>
+        {/* Nutrition Card */}
+        <View style={styles.nutritionCard}>
+          <Text style={styles.cardTitle}>Nutrition Facts</Text>
 
           <View style={styles.calorieRow}>
             <Text style={styles.calorieLabel}>Calories</Text>
             <Text style={styles.calorieValue}>{meal.calories}</Text>
           </View>
 
-          <View style={styles.macroRow}>
-            <View style={styles.macroItem}>
-              <View style={[styles.macroBar, styles.proteinBar, { width: `${Math.min((meal.protein / 60) * 100, 100)}%` }]} />
-              <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroValue}>{meal.protein}g</Text>
+          <View style={styles.macroBarRow}>
+            <View style={styles.macroBarItem}>
+              <View style={styles.macroBarHeader}>
+                <Text style={styles.macroBarLabel}>Protein</Text>
+                <Text style={styles.macroBarValue}>{meal.protein}g</Text>
+              </View>
+              <View style={styles.macroBarBg}>
+                <View style={[styles.macroBar, styles.proteinBar, { width: `${Math.min((meal.protein / 60) * 100, 100)}%` }]} />
+              </View>
             </View>
           </View>
 
-          <View style={styles.macroRow}>
-            <View style={styles.macroItem}>
-              <View style={[styles.macroBar, styles.carbsBar, { width: `${Math.min((meal.carbs / 100) * 100, 100)}%` }]} />
-              <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroValue}>{meal.carbs}g</Text>
+          <View style={styles.macroBarRow}>
+            <View style={styles.macroBarItem}>
+              <View style={styles.macroBarHeader}>
+                <Text style={styles.macroBarLabel}>Carbs</Text>
+                <Text style={styles.macroBarValue}>{meal.carbs}g</Text>
+              </View>
+              <View style={styles.macroBarBg}>
+                <View style={[styles.macroBar, styles.carbsBar, { width: `${Math.min((meal.carbs / 100) * 100, 100)}%` }]} />
+              </View>
             </View>
           </View>
 
-          <View style={styles.macroRow}>
-            <View style={styles.macroItem}>
-              <View style={[styles.macroBar, styles.fatBar, { width: `${Math.min((meal.fat / 40) * 100, 100)}%` }]} />
-              <Text style={styles.macroLabel}>Fat</Text>
-              <Text style={styles.macroValue}>{meal.fat}g</Text>
+          <View style={styles.macroBarRow}>
+            <View style={styles.macroBarItem}>
+              <View style={styles.macroBarHeader}>
+                <Text style={styles.macroBarLabel}>Fat</Text>
+                <Text style={styles.macroBarValue}>{meal.fat}g</Text>
+              </View>
+              <View style={styles.macroBarBg}>
+                <View style={[styles.macroBar, styles.fatBar, { width: `${Math.min((meal.fat / 40) * 100, 100)}%` }]} />
+              </View>
             </View>
           </View>
         </View>
 
+        {/* Healthify Tips */}
         {healthifyTips.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {user.profile?.goal === 'bulk' ? '💪 Bulk It Up' : user.profile?.goal === 'cut' ? '🔥 Lean It Out' : '💡 Healthify Tips'}
-            </Text>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="bulb-outline" size={20} color="#000" />
+              <Text style={styles.sectionTitle}>{getTipsTitle()}</Text>
+            </View>
             <Text style={styles.sectionSubtitle}>Modifications to fit your goals better</Text>
 
             {healthifyTips.map((item, index) => (
               <View key={index} style={styles.tipCard}>
                 <Text style={styles.tipText}>{item.tip}</Text>
-                <Text style={[styles.tipSaves, item.adds && styles.tipAdds]}>
+                <Text style={[styles.tipChange, item.adds && styles.tipAdds]}>
                   {item.saves || item.adds}
                 </Text>
               </View>
@@ -206,8 +237,12 @@ export default function MealDetailScreen({ navigation, route }) {
           </View>
         )}
 
+        {/* Daily Fit */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📊 How This Fits Your Day</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="pie-chart-outline" size={20} color="#000" />
+            <Text style={styles.sectionTitle}>How This Fits Your Day</Text>
+          </View>
 
           <View style={styles.fitCard}>
             <View style={styles.fitRow}>
@@ -234,19 +269,20 @@ export default function MealDetailScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* Order Button */}
-        <View style={styles.orderSection}>
-          <TouchableOpacity style={styles.orderButton} onPress={handleOrderPress}>
-            <Text style={styles.orderButtonText}>Order This Meal</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.copyButton} onPress={handleCopyOrder}>
-            <Text style={styles.copyButtonText}>📋 Copy Order Details</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 40 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* Fixed Bottom Buttons */}
+      <View style={[styles.bottomButtons, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <TouchableOpacity style={styles.orderButton} onPress={handleOrderPress}>
+          <Text style={styles.orderButtonText}>Order This Meal</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.copyButton} onPress={handleCopyOrder}>
+          <Ionicons name="clipboard-outline" size={18} color="#000" />
+          <Text style={styles.copyButtonText}>Copy Order Details</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Order Options Modal */}
       <Modal
@@ -256,7 +292,8 @@ export default function MealDetailScreen({ navigation, route }) {
         onRequestClose={() => setShowOrderModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Order from {restaurant.name}</Text>
             <Text style={styles.modalSubtitle}>Choose how you'd like to order</Text>
 
@@ -266,16 +303,20 @@ export default function MealDetailScreen({ navigation, route }) {
                 style={styles.modalOption}
                 onPress={() => handleOrderOption(option.id)}
               >
-                <Text style={styles.modalOptionIcon}>
-                  {option.id === 'doordash' ? '🚗' : option.id === 'ubereats' ? '🛵' : '📍'}
-                </Text>
+                <View style={styles.modalOptionIcon}>
+                  <Ionicons
+                    name={option.id === 'doordash' ? 'car-outline' : option.id === 'ubereats' ? 'bicycle-outline' : 'location-outline'}
+                    size={24}
+                    color="#000"
+                  />
+                </View>
                 <View style={styles.modalOptionContent}>
                   <Text style={styles.modalOptionTitle}>{option.name}</Text>
                   <Text style={styles.modalOptionSubtitle}>
                     {option.appInstalled ? 'Open app' : 'Open in browser'}
                   </Text>
                 </View>
-                <Text style={styles.modalOptionArrow}>→</Text>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
               </TouchableOpacity>
             ))}
 
@@ -295,22 +336,31 @@ export default function MealDetailScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F9F9F9',
   },
   header: {
-    padding: 24,
-    paddingBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   backButton: {
-    color: '#4ADE80',
-    fontSize: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scroll: {
     flex: 1,
   },
   mealHeader: {
-    padding: 24,
     alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 24,
   },
   matchBadge: {
     paddingHorizontal: 16,
@@ -319,66 +369,90 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   matchText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   mealName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000',
     textAlign: 'center',
     marginBottom: 4,
   },
   restaurantName: {
     fontSize: 16,
-    color: '#4ADE80',
+    color: '#666',
     marginBottom: 8,
   },
   mealDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#999',
     textAlign: 'center',
+    lineHeight: 20,
   },
-  macrosCard: {
-    backgroundColor: '#1F1F1F',
+  nutritionCard: {
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 24,
     marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  macrosTitle: {
+  cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
     marginBottom: 16,
   },
   calorieRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: '#F0F0F0',
     marginBottom: 16,
   },
   calorieLabel: {
     fontSize: 18,
-    color: '#fff',
+    color: '#000',
   },
   calorieValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#4ADE80',
+    color: '#000',
   },
-  macroRow: {
+  macroBarRow: {
     marginBottom: 12,
   },
-  macroItem: {
-    position: 'relative',
+  macroBarItem: {},
+  macroBarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  macroBarLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  macroBarValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+  },
+  macroBarBg: {
+    height: 8,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   macroBar: {
     height: 8,
     borderRadius: 4,
-    marginBottom: 6,
   },
   proteinBar: {
     backgroundColor: '#EF4444',
@@ -389,145 +463,175 @@ const styles = StyleSheet.create({
   fatBar: {
     backgroundColor: '#F59E0B',
   },
-  macroLabel: {
-    fontSize: 14,
-    color: '#9CA3AF',
-  },
-  macroValue: {
-    position: 'absolute',
-    right: 0,
-    top: 8,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
   section: {
     paddingHorizontal: 24,
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
+    color: '#000',
+    marginLeft: 8,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
     marginBottom: 16,
   },
   tipCard: {
-    backgroundColor: '#1F1F1F',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   tipText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#000',
     flex: 1,
   },
-  tipSaves: {
+  tipChange: {
     fontSize: 14,
-    color: '#4ADE80',
+    color: '#22C55E',
+    fontWeight: '500',
   },
   tipAdds: {
     color: '#F59E0B',
   },
   fitCard: {
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   fitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingVertical: 8,
   },
   fitDivider: {
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: '#F0F0F0',
     marginVertical: 8,
   },
   fitLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
   },
   fitValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
   },
   greenText: {
-    color: '#4ADE80',
+    color: '#22C55E',
   },
   redText: {
     color: '#EF4444',
   },
-  orderSection: {
+  bottomButtons: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#F9F9F9',
     paddingHorizontal: 24,
-    gap: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
   },
   orderButton: {
-    backgroundColor: '#4ADE80',
-    borderRadius: 12,
+    backgroundColor: '#000',
+    borderRadius: 30,
     padding: 18,
     alignItems: 'center',
+    marginBottom: 10,
   },
   orderButtonText: {
-    color: '#000',
-    fontSize: 18,
+    color: '#fff',
+    fontSize: 17,
     fontWeight: '600',
   },
   copyButton: {
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
-    padding: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   copyButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#000',
+    fontSize: 15,
+    fontWeight: '500',
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1F1F1F',
+    backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    paddingBottom: 40,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E5E5E5',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
     textAlign: 'center',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
     textAlign: 'center',
     marginBottom: 24,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   modalOptionIcon: {
-    fontSize: 28,
-    marginRight: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
   modalOptionContent: {
     flex: 1,
@@ -535,15 +639,12 @@ const styles = StyleSheet.create({
   modalOptionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
   },
   modalOptionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
-  },
-  modalOptionArrow: {
-    fontSize: 18,
-    color: '#9CA3AF',
+    color: '#666',
+    marginTop: 2,
   },
   modalCancel: {
     alignItems: 'center',
@@ -552,6 +653,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: '#666',
+    fontWeight: '500',
   },
 });

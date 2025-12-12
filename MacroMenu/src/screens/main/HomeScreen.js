@@ -1,36 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../context/UserContext';
-import { searchRestaurants } from '../../services/api/nutritionix';
 
-// Restaurant icons mapping
-const RESTAURANT_ICONS = {
-  chipotle: '🌯',
-  mcdonalds: '🍔',
-  subway: '🥪',
-  'chick-fil-a': '🍗',
-  chickfila: '🍗',
-  wendys: '🍔',
-  'taco bell': '🌮',
-  tacobell: '🌮',
-  panera: '🥖',
-  'panera bread': '🥖',
-  starbucks: '☕',
-  sweetgreen: '🥗',
-  'shake shack': '🍔',
-  shakeshack: '🍔',
-  'buffalo wild wings': '🍗',
-  cava: '🥙',
-  'jersey mikes': '🥪',
-  whataburger: '🍔',
-  sonic: '🍔',
-  default: '🍽️',
+// Restaurant logos
+const logos = {
+  chipotle: require('../../../assets/logos/chipotle.png'),
+  shakeshack: require('../../../assets/logos/shakeshack.png'),
+  jerseymikes: require('../../../assets/logos/jerseysmikes.png'),
+  whataburger: require('../../../assets/logos/whataburger.png'),
+  buffalowildwings: require('../../../assets/logos/buffalowildwings.png'),
+  sonic: require('../../../assets/logos/sonic.png'),
+  chickfila: require('../../../assets/logos/chickfila.png'),
+  cava: require('../../../assets/logos/Cava-Logo.png'),
 };
 
-function getRestaurantIcon(name) {
-  const normalized = name.toLowerCase().replace(/[^a-z ]/g, '');
-  return RESTAURANT_ICONS[normalized] || RESTAURANT_ICONS.default;
+function getRestaurantLogo(name) {
+  const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+  return logos[normalized] || null;
 }
 
 function getGreeting() {
@@ -63,7 +51,6 @@ export default function HomeScreen({ navigation }) {
 
     setSearching(true);
     try {
-      // Navigate to results with search query
       navigation.navigate('RestaurantResults', { searchQuery: search.trim() });
     } finally {
       setSearching(false);
@@ -75,89 +62,92 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('RestaurantDetail', { restaurant });
   };
 
-  // Get recent restaurants from user context or use defaults
-  const recentRestaurants = user.recentRestaurants.length > 0
-    ? user.recentRestaurants.slice(0, 5)
-    : [
-        { id: 'chipotle', name: 'Chipotle', type: 'Mexican', brandId: 'chipotle' },
-        { id: 'chickfila', name: "Chick-fil-A", type: 'Fast Food', brandId: 'chick-fil-a' },
-        { id: 'sweetgreen', name: 'Sweetgreen', type: 'Salads', brandId: 'sweetgreen' },
-      ];
+  // Default restaurants to show
+  const defaultRestaurants = [
+    { id: 'chipotle', name: 'Chipotle', type: 'Mexican', brandId: 'chipotle' },
+    { id: 'chickfila', name: "Chick-fil-A", type: 'Fast Food', brandId: 'chickfila' },
+    { id: 'cava', name: 'CAVA', type: 'Mediterranean', brandId: 'cava' },
+  ];
 
-  // Favorite restaurants from preferences
+  const recentRestaurants = user.recentRestaurants?.length > 0
+    ? user.recentRestaurants.slice(0, 5)
+    : defaultRestaurants;
+
   const favoriteRestaurants = user.preferences?.favoriteRestaurants || [];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.title}>What are you eating?</Text>
             {user.profile?.goal && (
-              <Text style={styles.goalText}>{getGoalText(user.profile.goal)}</Text>
+              <View style={styles.goalBadge}>
+                <Text style={styles.goalText}>{getGoalText(user.profile.goal)}</Text>
+              </View>
             )}
           </View>
           <TouchableOpacity
             style={styles.profileButton}
             onPress={() => navigation.navigate('Profile')}
           >
-            <Text style={styles.profileIcon}>👤</Text>
+            <Ionicons name="person-outline" size={22} color="#000" />
           </TouchableOpacity>
         </View>
 
+        {/* Search */}
         <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             value={search}
             onChangeText={setSearch}
             placeholder="Search restaurants..."
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="#999"
             returnKeyType="search"
             onSubmitEditing={handleSearch}
           />
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={handleSearch}
-            disabled={searching}
-          >
-            {searching ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={styles.searchIcon}>🔍</Text>
-            )}
-          </TouchableOpacity>
+          {searching && <ActivityIndicator color="#000" style={styles.searchLoader} />}
         </View>
 
+        {/* AI Card */}
         <TouchableOpacity
           style={styles.aiCard}
           onPress={() => navigation.navigate('AIChat')}
+          activeOpacity={0.7}
         >
-          <Text style={styles.aiIcon}>🤖</Text>
+          <View style={styles.aiIconContainer}>
+            <Ionicons name="sparkles" size={24} color="#000" />
+          </View>
           <View style={styles.aiContent}>
             <Text style={styles.aiTitle}>Ask AI</Text>
             <Text style={styles.aiSubtitle}>What should I order at...</Text>
           </View>
-          <Text style={styles.aiArrow}>→</Text>
+          <Ionicons name="chevron-forward" size={20} color="#999" />
         </TouchableOpacity>
 
-        {/* Daily macros summary if available */}
+        {/* Daily Macros */}
         {user.macros?.calories && (
-          <View style={styles.macrosSummary}>
+          <View style={styles.macrosCard}>
             <Text style={styles.macrosTitle}>Your Daily Targets</Text>
             <View style={styles.macrosRow}>
               <View style={styles.macroItem}>
                 <Text style={styles.macroValue}>{user.macros.calories}</Text>
                 <Text style={styles.macroLabel}>cal</Text>
               </View>
+              <View style={styles.macroDivider} />
               <View style={styles.macroItem}>
                 <Text style={[styles.macroValue, styles.proteinText]}>{user.macros.protein}g</Text>
                 <Text style={styles.macroLabel}>protein</Text>
               </View>
+              <View style={styles.macroDivider} />
               <View style={styles.macroItem}>
                 <Text style={styles.macroValue}>{user.macros.carbs}g</Text>
                 <Text style={styles.macroLabel}>carbs</Text>
               </View>
+              <View style={styles.macroDivider} />
               <View style={styles.macroItem}>
                 <Text style={styles.macroValue}>{user.macros.fat}g</Text>
                 <Text style={styles.macroLabel}>fat</Text>
@@ -166,64 +156,91 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* Favorite spots from onboarding */}
+        {/* Favorite Spots */}
         {favoriteRestaurants.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Favorites</Text>
-            {favoriteRestaurants.slice(0, 4).map((restaurant, index) => (
-              <TouchableOpacity
-                key={`fav-${index}`}
-                style={styles.restaurantCard}
-                onPress={() => handleRestaurantPress({
-                  id: restaurant.toLowerCase().replace(/[^a-z]/g, ''),
-                  name: restaurant,
-                  type: 'Restaurant',
-                  brandId: restaurant.toLowerCase().replace(/[^a-z]/g, ''),
-                })}
-              >
-                <Text style={styles.restaurantIcon}>{getRestaurantIcon(restaurant)}</Text>
-                <View style={styles.restaurantInfo}>
-                  <Text style={styles.restaurantName}>{restaurant}</Text>
-                  <Text style={styles.restaurantType}>Tap to see menu</Text>
-                </View>
-                <Text style={styles.restaurantArrow}>→</Text>
-              </TouchableOpacity>
-            ))}
+            {favoriteRestaurants.slice(0, 4).map((restaurantId, index) => {
+              const restaurant = {
+                id: restaurantId,
+                name: restaurantId.charAt(0).toUpperCase() + restaurantId.slice(1).replace(/([A-Z])/g, ' $1'),
+                type: 'Restaurant',
+                brandId: restaurantId,
+              };
+              const logo = getRestaurantLogo(restaurantId);
+              return (
+                <TouchableOpacity
+                  key={`fav-${index}`}
+                  style={styles.restaurantCard}
+                  onPress={() => handleRestaurantPress(restaurant)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.restaurantIcon}>
+                    {logo ? (
+                      <Image source={logo} style={styles.restaurantLogo} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="restaurant-outline" size={24} color="#666" />
+                    )}
+                  </View>
+                  <View style={styles.restaurantInfo}>
+                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                    <Text style={styles.restaurantType}>Tap to see menu</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#999" />
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
+        {/* Recent */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent</Text>
-          {recentRestaurants.map((restaurant, index) => (
-            <TouchableOpacity
-              key={restaurant.id || index}
-              style={styles.restaurantCard}
-              onPress={() => handleRestaurantPress(restaurant)}
-            >
-              <Text style={styles.restaurantIcon}>{getRestaurantIcon(restaurant.name)}</Text>
-              <View style={styles.restaurantInfo}>
-                <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                <Text style={styles.restaurantType}>{restaurant.type}</Text>
-              </View>
-              <Text style={styles.restaurantArrow}>→</Text>
-            </TouchableOpacity>
-          ))}
+          {recentRestaurants.map((restaurant, index) => {
+            const logo = getRestaurantLogo(restaurant.name || restaurant.id);
+            return (
+              <TouchableOpacity
+                key={restaurant.id || index}
+                style={styles.restaurantCard}
+                onPress={() => handleRestaurantPress(restaurant)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.restaurantIcon}>
+                  {logo ? (
+                    <Image source={logo} style={styles.restaurantLogo} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="restaurant-outline" size={24} color="#666" />
+                  )}
+                </View>
+                <View style={styles.restaurantInfo}>
+                  <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                  <Text style={styles.restaurantType}>{restaurant.type}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
+        {/* Browse All */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular Chains</Text>
           <TouchableOpacity
-            style={styles.restaurantCard}
+            style={styles.browseCard}
             onPress={() => navigation.navigate('RestaurantResults', { showPopular: true })}
+            activeOpacity={0.7}
           >
-            <Text style={styles.restaurantIcon}>📍</Text>
+            <View style={styles.browseIcon}>
+              <Ionicons name="grid-outline" size={24} color="#000" />
+            </View>
             <View style={styles.restaurantInfo}>
               <Text style={styles.restaurantName}>Browse all restaurants</Text>
               <Text style={styles.restaurantType}>Find meals that fit your goals</Text>
             </View>
-            <Text style={styles.restaurantArrow}>→</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
         </View>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -232,163 +249,226 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F9F9F9',
   },
   scroll: {
     flex: 1,
-    padding: 24,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   greeting: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
+    marginBottom: 4,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000',
+    marginBottom: 8,
+  },
+  goalBadge: {
+    backgroundColor: '#000',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
   },
   goalText: {
-    fontSize: 14,
-    color: '#4ADE80',
-    marginTop: 4,
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
   },
   profileButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#1F1F1F',
+    backgroundColor: '#fff',
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  profileIcon: {
-    fontSize: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   searchContainer: {
     flexDirection: 'row',
-    marginBottom: 24,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    marginRight: 12,
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
-    padding: 16,
+    paddingVertical: 16,
     fontSize: 16,
-    color: '#fff',
+    color: '#000',
   },
-  searchButton: {
-    width: 56,
-    backgroundColor: '#4ADE80',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchIcon: {
-    fontSize: 24,
+  searchLoader: {
+    marginLeft: 8,
   },
   aiCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a2e1a',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#4ADE80',
+    marginHorizontal: 24,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#000',
   },
-  aiIcon: {
-    fontSize: 32,
-    marginRight: 12,
+  aiIconContainer: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
   aiContent: {
     flex: 1,
   },
   aiTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#4ADE80',
+    color: '#000',
   },
   aiSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
+    marginTop: 2,
   },
-  aiArrow: {
-    fontSize: 20,
-    color: '#4ADE80',
-  },
-  macrosSummary: {
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
-    padding: 16,
+  macrosCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 24,
     marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   macrosTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#9CA3AF',
-    marginBottom: 12,
+    color: '#666',
+    marginBottom: 16,
   },
   macrosRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   macroItem: {
     alignItems: 'center',
+    flex: 1,
+  },
+  macroDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: '#E5E5E5',
   },
   macroValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000',
   },
   proteinText: {
-    color: '#4ADE80',
+    color: '#000',
   },
   macroLabel: {
     fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
+    color: '#999',
+    marginTop: 4,
   },
   section: {
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
     marginBottom: 12,
   },
   restaurantCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 8,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   restaurantIcon: {
-    fontSize: 32,
-    marginRight: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    overflow: 'hidden',
+  },
+  restaurantLogo: {
+    width: 36,
+    height: 36,
   },
   restaurantInfo: {
     flex: 1,
   },
   restaurantName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
   },
   restaurantType: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#999',
+    marginTop: 2,
   },
-  restaurantArrow: {
-    fontSize: 18,
-    color: '#9CA3AF',
+  browseCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderStyle: 'dashed',
+  },
+  browseIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
 });

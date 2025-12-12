@@ -208,3 +208,108 @@ Cart injection (pre-adding items) requires partner API access.
 - Fixed Supabase URL error by adding configuration bypass
 - Verified app runs without API keys (guest mode)
 - Clarified what's actually implemented vs. what needs API keys
+
+---
+
+## Marketing & Promotion Strategy
+
+### Goal
+$20K MRR in 6 months (~2,500-3,000 paying users)
+
+### Competitor Analysis: MenuFit (Deep Dive)
+
+**Founder:** Cole Kosco (@colekosco)
+- 277K Instagram followers
+- Nutrition coach, former athlete
+- Had 80K+ waitlist before launch
+- Hit $60K MRR in 2 months
+
+**His Content Strategy:**
+1. "Us vs Them" comparisons - High calorie meal vs smart swap at same restaurant
+2. Shock value - "This milkshake is 1,720 calories"
+3. Myth busting - "Junk Food = Fat Loss?"
+4. CTA on every video - "Comment 'FOOD' for..." triggers auto-DM with app link
+
+**His Funnel:**
+- Top: Viral content on Instagram/TikTok reaches fitness audiences
+- Mid: Users comment → DM link → landing page with social proof
+- Bottom: Onboarding quiz personalizes experience before paywall
+
+**MenuFit Pricing:** $9.99/month or $19.99/year
+
+**His Advantage:** Built-in 277K audience who already trusted him on fitness/nutrition
+
+**His Vulnerabilities:**
+1. He IS the brand - if Cole disappears, MenuFit struggles
+2. Formulaic content - "comment X for Y" is tired
+3. Targets cutting crowd hard - bulking audience underserved
+4. No community - broadcasting, not building
+5. Playing influencer game - we can play "real person" game
+
+### MacroMenu Positioning
+
+**Our Angle:** "I'm not a nutrition coach. I'm a gym bro who got tired of guessing what to order."
+
+**Key Differentiators:**
+- Relatable, not aspirational ("I struggle with tracking too")
+- Gym bro credibility + practical/social approach
+- "I take my fitness seriously but I'm not about to skip every dinner with friends"
+
+**Target Audience (Initial Focus):** Serious fitness crowd
+- More passionate, share more, engage more
+- Understand macro tracking pain point immediately
+- Active in communities (Reddit, Discord, gym groups)
+- Will forgive v1 app if it solves their problem
+
+### Content Strategy
+
+**Content Pillars (Zig Where Cole Zags):**
+1. **Bulking-focused content** - "Best high-protein meals at [restaurant]" - he barely touches this
+2. **Real scenarios** - "My friends picked the restaurant, here's how I still hit my macros"
+3. **Behind the scenes** - Document building the app, fitness journey using it
+4. **Controversial takes** - Risky but attention-grabbing
+5. **Speed/convenience angle** - "Found my meal in 10 seconds" - emphasize the tech
+
+### CTA Strategy
+
+**Different from Cole's "Comment FOOD" approach:**
+
+**For viral/hook content** (comparisons, controversial takes):
+- End with app visible on screen
+- Soft CTA: "MacroMenu - link in bio" or just flash app name
+- Let curiosity drive comments ("what app is this?")
+
+**For app demo content:**
+- No CTA needed - product IS the content
+- End on result: "Found my meal in 10 seconds"
+
+**For story/relatable content:**
+- Show solution naturally
+- "Good thing I have this" → show app → no hard CTA
+
+**Signature CTAs:**
+- "App's called MacroMenu" - simple, confident, not desperate
+- "You're welcome" - cocky, abundance mindset
+
+### Growth Channels
+
+| Channel | Strategy |
+|---------|----------|
+| TikTok/Reels | Daily posting, relatable content, volume until viral |
+| YouTube Shorts | Less competition, better longevity |
+| Reddit | r/fitness, r/gainit, r/loseit - helpful presence |
+| Paid Influencers | Micro-influencers (10-50K) for product + fee/affiliate |
+| ASO | Keywords, screenshots, ratings |
+
+### Pre-Launch Checklist (Before Going Viral)
+
+Funnel must be airtight BEFORE viral moment:
+- [ ] App live and polished in App Store
+- [ ] Landing page that converts
+- [ ] Auto-DM system ready (ManyChat)
+- [ ] Onboarding → paywall flow optimized
+- [ ] App Store listing solid (screenshots, description, keywords)
+
+### Key Insight
+
+Creator has multiple viral videos (1M+ views) on other accounts with "objectively not well made" content - just relatable. This algorithm understanding is a major asset. With quality content posted daily for 6 months (180+ pieces), viral hits are statistically likely.

@@ -1,44 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../context/UserContext';
 import { searchMenuItems } from '../../services/api/nutritionix';
-import { rankMeals, calculateMatchScore } from '../../utils/matchScore';
+import { rankMeals } from '../../utils/matchScore';
 import { calculateUserMacros, calculatePerMealMacros } from '../../utils/macroCalculator';
 
-// Restaurant icons mapping
-const RESTAURANT_ICONS = {
-  chipotle: '🌯',
-  mcdonalds: '🍔',
-  subway: '🥪',
-  'chick-fil-a': '🍗',
-  chickfila: '🍗',
-  wendys: '🍔',
-  'taco bell': '🌮',
-  tacobell: '🌮',
-  panera: '🥖',
-  'panera bread': '🥖',
-  starbucks: '☕',
-  sweetgreen: '🥗',
-  'shake shack': '🍔',
-  shakeshack: '🍔',
-  'buffalo wild wings': '🍗',
-  cava: '🥙',
-  'jersey mikes': '🥪',
-  whataburger: '🍔',
-  sonic: '🍔',
-  default: '🍽️',
+// Restaurant logos
+const logos = {
+  chipotle: require('../../../assets/logos/chipotle.png'),
+  shakeshack: require('../../../assets/logos/shakeshack.png'),
+  jerseymikes: require('../../../assets/logos/jerseysmikes.png'),
+  whataburger: require('../../../assets/logos/whataburger.png'),
+  buffalowildwings: require('../../../assets/logos/buffalowildwings.png'),
+  sonic: require('../../../assets/logos/sonic.png'),
+  chickfila: require('../../../assets/logos/chickfila.png'),
+  cava: require('../../../assets/logos/Cava-Logo.png'),
 };
 
-function getRestaurantIcon(name) {
-  const normalized = name.toLowerCase().replace(/[^a-z ]/g, '');
-  return RESTAURANT_ICONS[normalized] || RESTAURANT_ICONS.default;
+function getRestaurantLogo(name) {
+  const normalized = name.toLowerCase().replace(/[^a-z]/g, '');
+  return logos[normalized] || null;
 }
 
 function getMatchColor(score) {
-  if (score >= 85) return '#4ADE80'; // Green
-  if (score >= 70) return '#F59E0B'; // Yellow/Orange
-  return '#EF4444'; // Red
+  if (score >= 85) return '#22C55E';
+  if (score >= 70) return '#F59E0B';
+  return '#EF4444';
+}
+
+function getMatchBg(score) {
+  if (score >= 85) return '#DCFCE7';
+  if (score >= 70) return '#FEF3C7';
+  return '#FEE2E2';
 }
 
 export default function RestaurantDetailScreen({ navigation, route }) {
@@ -48,21 +43,18 @@ export default function RestaurantDetailScreen({ navigation, route }) {
   const [error, setError] = useState(null);
 
   const restaurant = route?.params?.restaurant || { name: 'Restaurant', type: 'Restaurant' };
+  const logo = getRestaurantLogo(restaurant.name);
 
-  // Calculate user's per-meal macro targets
   const getUserTargets = () => {
-    // If user has set macros, use those
     if (user.macros?.calories) {
       return calculatePerMealMacros(user.macros);
     }
 
-    // Otherwise calculate from profile
     if (user.profile?.currentWeight && user.profile?.height && user.profile?.goal) {
       const calculated = calculateUserMacros(user.profile);
       return calculated.perMeal;
     }
 
-    // Default targets for a general user
     return {
       calories: 700,
       protein: 40,
@@ -80,7 +72,6 @@ export default function RestaurantDetailScreen({ navigation, route }) {
     setError(null);
 
     try {
-      // Search for menu items from this restaurant
       const items = await searchMenuItems(restaurant.name);
 
       if (items.length === 0) {
@@ -89,7 +80,6 @@ export default function RestaurantDetailScreen({ navigation, route }) {
         return;
       }
 
-      // Get user targets and preferences
       const targets = getUserTargets();
       const preferences = {
         foodLikes: user.preferences?.foodLikes || {},
@@ -97,10 +87,8 @@ export default function RestaurantDetailScreen({ navigation, route }) {
         allergies: user.restrictions?.allergies || [],
       };
 
-      // Calculate match scores and rank meals
-      const rankedItems = rankMeals(items, targets, preferences, 0); // No minimum score filter
-
-      setMenuItems(rankedItems.slice(0, 20)); // Show top 20
+      const rankedItems = rankMeals(items, targets, preferences, 0);
+      setMenuItems(rankedItems.slice(0, 20));
     } catch (err) {
       console.error('Error loading menu items:', err);
       setError('Unable to load menu. Please try again.');
@@ -118,29 +106,51 @@ export default function RestaurantDetailScreen({ navigation, route }) {
     });
   };
 
+  const getGoalText = () => {
+    switch (user.profile?.goal) {
+      case 'bulk':
+        return 'muscle-building';
+      case 'cut':
+        return 'fat-loss';
+      default:
+        return 'fitness';
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Restaurant Header */}
         <View style={styles.restaurantHeader}>
-          <Text style={styles.restaurantIcon}>{getRestaurantIcon(restaurant.name)}</Text>
+          <View style={styles.logoContainer}>
+            {logo ? (
+              <Image source={logo} style={styles.logo} resizeMode="contain" />
+            ) : (
+              <Ionicons name="restaurant-outline" size={48} color="#666" />
+            )}
+          </View>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
           <Text style={styles.restaurantType}>{restaurant.type}</Text>
         </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4ADE80" />
+            <ActivityIndicator size="large" color="#000" />
             <Text style={styles.loadingText}>Finding the best meals for you...</Text>
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorIcon}>⚠️</Text>
+            <View style={styles.errorIcon}>
+              <Ionicons name="alert-circle-outline" size={48} color="#F59E0B" />
+            </View>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={loadMenuItems}>
               <Text style={styles.retryText}>Try Again</Text>
@@ -150,7 +160,7 @@ export default function RestaurantDetailScreen({ navigation, route }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Best For You</Text>
             <Text style={styles.sectionSubtitle}>
-              Ranked by your {user.profile?.goal === 'bulk' ? 'muscle-building' : user.profile?.goal === 'cut' ? 'fat-loss' : 'fitness'} goals
+              Ranked by your {getGoalText()} goals
             </Text>
 
             {menuItems.map((item, index) => (
@@ -158,12 +168,13 @@ export default function RestaurantDetailScreen({ navigation, route }) {
                 key={item.id || index}
                 style={styles.menuCard}
                 onPress={() => handleMealPress(item)}
+                activeOpacity={0.7}
               >
                 <View style={styles.menuHeader}>
                   <View style={styles.rankBadge}>
                     <Text style={styles.rankText}>#{index + 1}</Text>
                   </View>
-                  <View style={[styles.matchBadge, { backgroundColor: `${getMatchColor(item.matchScore)}20` }]}>
+                  <View style={[styles.matchBadge, { backgroundColor: getMatchBg(item.matchScore) }]}>
                     <Text style={[styles.matchText, { color: getMatchColor(item.matchScore) }]}>
                       {item.matchScore}% match
                     </Text>
@@ -182,31 +193,37 @@ export default function RestaurantDetailScreen({ navigation, route }) {
                     <Text style={styles.macroValue}>{item.calories}</Text>
                     <Text style={styles.macroLabel}>cal</Text>
                   </View>
+                  <View style={styles.macroDivider} />
                   <View style={styles.macroItem}>
                     <Text style={[styles.macroValue, styles.proteinText]}>{item.protein}g</Text>
                     <Text style={styles.macroLabel}>protein</Text>
                   </View>
+                  <View style={styles.macroDivider} />
                   <View style={styles.macroItem}>
                     <Text style={styles.macroValue}>{item.carbs}g</Text>
                     <Text style={styles.macroLabel}>carbs</Text>
                   </View>
+                  <View style={styles.macroDivider} />
                   <View style={styles.macroItem}>
                     <Text style={styles.macroValue}>{item.fat}g</Text>
                     <Text style={styles.macroLabel}>fat</Text>
                   </View>
                 </View>
 
-                {/* Match breakdown hint */}
+                {/* Match breakdown hints */}
                 {item.matchBreakdown && (
                   <View style={styles.breakdownHint}>
                     {item.matchBreakdown.protein >= 85 && (
-                      <Text style={styles.hintText}>✓ Great protein</Text>
+                      <View style={styles.hintBadge}>
+                        <Ionicons name="checkmark-circle" size={14} color="#22C55E" />
+                        <Text style={styles.hintText}>Great protein</Text>
+                      </View>
                     )}
                     {item.matchBreakdown.calories >= 85 && (
-                      <Text style={styles.hintText}>✓ Perfect calories</Text>
-                    )}
-                    {item.matchBreakdown.macroBalance >= 80 && (
-                      <Text style={styles.hintText}>✓ Balanced macros</Text>
+                      <View style={styles.hintBadge}>
+                        <Ionicons name="checkmark-circle" size={14} color="#22C55E" />
+                        <Text style={styles.hintText}>Perfect calories</Text>
+                      </View>
                     )}
                   </View>
                 )}
@@ -215,7 +232,9 @@ export default function RestaurantDetailScreen({ navigation, route }) {
 
             {menuItems.length === 0 && !loading && !error && (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>🍽️</Text>
+                <View style={styles.emptyIcon}>
+                  <Ionicons name="restaurant-outline" size={48} color="#999" />
+                </View>
                 <Text style={styles.emptyTitle}>No meals found</Text>
                 <Text style={styles.emptySubtitle}>
                   We couldn't find menu items for this restaurant
@@ -224,6 +243,8 @@ export default function RestaurantDetailScreen({ navigation, route }) {
             )}
           </View>
         )}
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -232,45 +253,67 @@ export default function RestaurantDetailScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F9F9F9',
   },
   header: {
-    padding: 24,
-    paddingBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   backButton: {
-    color: '#4ADE80',
-    fontSize: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scroll: {
     flex: 1,
   },
   restaurantHeader: {
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 16,
+    paddingVertical: 24,
   },
-  restaurantIcon: {
-    fontSize: 64,
-    marginBottom: 12,
+  logoContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  logo: {
+    width: 64,
+    height: 64,
   },
   restaurantName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000',
     marginBottom: 4,
     textAlign: 'center',
   },
   restaurantType: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: '#666',
   },
   loadingContainer: {
     padding: 48,
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: '#666',
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
@@ -280,105 +323,124 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorIcon: {
-    fontSize: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   errorText: {
-    color: '#9CA3AF',
+    color: '#666',
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#4ADE80',
+    backgroundColor: '#000',
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 30,
   },
   retryText: {
-    color: '#000',
+    color: '#fff',
     fontWeight: '600',
+    fontSize: 16,
   },
   section: {
-    padding: 24,
-    paddingTop: 0,
+    paddingHorizontal: 24,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 16,
+    color: '#666',
+    marginBottom: 20,
   },
   menuCard: {
-    backgroundColor: '#1F1F1F',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   menuHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   rankBadge: {
-    backgroundColor: '#4ADE80',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    backgroundColor: '#000',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   rankText: {
-    color: '#000',
+    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
   matchBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   matchText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   menuName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
     marginBottom: 4,
   },
   menuDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
   },
   macrosRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#171717',
-    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
     padding: 12,
   },
   macroItem: {
     alignItems: 'center',
+    flex: 1,
+  },
+  macroDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#E5E5E5',
   },
   macroValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
   },
   proteinText: {
-    color: '#4ADE80',
+    color: '#000',
   },
   macroLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontSize: 11,
+    color: '#999',
     marginTop: 2,
   },
   breakdownHint: {
@@ -387,27 +449,42 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
   },
+  hintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
   hintText: {
     fontSize: 12,
-    color: '#4ADE80',
+    color: '#22C55E',
+    fontWeight: '500',
+    marginLeft: 4,
   },
   emptyState: {
     alignItems: 'center',
     paddingVertical: 48,
   },
   emptyIcon: {
-    fontSize: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#000',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#666',
     textAlign: 'center',
   },
 });

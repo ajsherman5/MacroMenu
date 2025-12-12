@@ -12,13 +12,12 @@
       "Bash(git add:*)",
       "Bash(git pull:*)",
       "Bash(curl:*)",
-      "Bash(__NEW_LINE__ curl -L -o qdoba.png \"https://www.google.com/s2/favicons?sz=128&domain=qdoba.com\")",
-      "Bash(__NEW_LINE__ file qdoba.png wendys.png chickfila.png potbelly.png zaxbys.png)",
       "WebFetch(domain:1000logos.net)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git config:*)"
     ]
   }
 }
