@@ -6,22 +6,24 @@ import { useOnboarding } from '../../context';
 
 const logos = {
   chipotle: require('../../../assets/logos/chipotle.png'),
-  wendys: require('../../../assets/logos/wendys.png'),
-  mcdonalds: require('../../../assets/logos/mcdonalds.png'),
+  shakeshack: require('../../../assets/logos/shakeshack.png'),
+  jerseymikes: require('../../../assets/logos/jerseysmikes.png'),
+  whataburger: require('../../../assets/logos/whataburger.png'),
+  buffalowildwings: require('../../../assets/logos/buffalowildwings.png'),
+  sonic: require('../../../assets/logos/sonic.png'),
   chickfila: require('../../../assets/logos/chickfila.png'),
-  subway: require('../../../assets/logos/subway.png'),
-  starbucks: require('../../../assets/logos/starbucks.png'),
+  cava: require('../../../assets/logos/Cava-Logo.png'),
 };
 
 const popularSpots = [
   { id: 'chipotle', name: 'Chipotle', hasLogo: true },
-  { id: 'wendys', name: "Wendy's", hasLogo: true },
-  { id: 'tacobell', name: 'Taco Bell', icon: 'restaurant' },
-  { id: 'panera', name: 'Panera', icon: 'cafe' },
-  { id: 'mcdonalds', name: "McDonald's", hasLogo: true },
+  { id: 'shakeshack', name: 'Shake Shack', hasLogo: true },
+  { id: 'jerseymikes', name: "Jersey Mike's", hasLogo: true },
+  { id: 'whataburger', name: 'Whataburger', hasLogo: true },
+  { id: 'buffalowildwings', name: 'Buffalo Wild Wings', hasLogo: true },
+  { id: 'sonic', name: 'Sonic', hasLogo: true },
   { id: 'chickfila', name: 'Chick-fil-A', hasLogo: true },
-  { id: 'subway', name: 'Subway', hasLogo: true },
-  { id: 'starbucks', name: 'Starbucks', hasLogo: true },
+  { id: 'cava', name: 'CAVA', hasLogo: true },
 ];
 
 export default function FavoriteSpotsScreen({ navigation }) {

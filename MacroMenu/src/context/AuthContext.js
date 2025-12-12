@@ -1,12 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  supabase,
-  signInWithEmail,
-  signUpWithEmail,
-  signOut as supabaseSignOut,
-  onAuthStateChange,
-} from '../services/supabase';
+import { isSupabaseConfigured } from '../services/supabase/config';
+
+// Only import Supabase functions if configured
+let supabase = null;
+let signInWithEmail = null;
+let signUpWithEmail = null;
+let supabaseSignOut = null;
+let onAuthStateChange = null;
+
+if (isSupabaseConfigured) {
+  const supabaseModule = require('../services/supabase');
+  supabase = supabaseModule.supabase;
+  signInWithEmail = supabaseModule.signInWithEmail;
+  signUpWithEmail = supabaseModule.signUpWithEmail;
+  supabaseSignOut = supabaseModule.signOut;
+  onAuthStateChange = supabaseModule.onAuthStateChange;
+}
 
 const AuthContext = createContext();
 
@@ -27,26 +37,29 @@ export function AuthProvider({ children }) {
     checkAuth();
     checkOnboardingStatus();
 
-    // Subscribe to auth state changes from Supabase
-    const subscription = onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setAuthState((prev) => ({
-          ...prev,
-          user: session.user,
-          session,
-          isAuthenticated: true,
-          isLoading: false,
-        }));
-      } else if (event === 'SIGNED_OUT') {
-        setAuthState((prev) => ({
-          ...prev,
-          user: null,
-          session: null,
-          isAuthenticated: false,
-          isLoading: false,
-        }));
-      }
-    });
+    // Subscribe to auth state changes from Supabase (only if configured)
+    let subscription = null;
+    if (isSupabaseConfigured && onAuthStateChange) {
+      subscription = onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setAuthState((prev) => ({
+            ...prev,
+            user: session.user,
+            session,
+            isAuthenticated: true,
+            isLoading: false,
+          }));
+        } else if (event === 'SIGNED_OUT') {
+          setAuthState((prev) => ({
+            ...prev,
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            isLoading: false,
+          }));
+        }
+      });
+    }
 
     return () => {
       subscription?.unsubscribe();
@@ -55,29 +68,33 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      // Try Supabase auth first if configured
+      if (isSupabaseConfigured && supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setAuthState((prev) => ({
+            ...prev,
+            user: session.user,
+            session,
+            isAuthenticated: true,
+            isLoading: false,
+          }));
+          return;
+        }
+      }
+
+      // Check for local auth (anonymous/guest mode)
+      const stored = await AsyncStorage.getItem(AUTH_KEY);
+      if (stored) {
+        const { user } = JSON.parse(stored);
         setAuthState((prev) => ({
           ...prev,
-          user: session.user,
-          session,
+          user,
           isAuthenticated: true,
           isLoading: false,
         }));
       } else {
-        // Check for local auth (anonymous/guest mode)
-        const stored = await AsyncStorage.getItem(AUTH_KEY);
-        if (stored) {
-          const { user } = JSON.parse(stored);
-          setAuthState((prev) => ({
-            ...prev,
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-          }));
-        } else {
-          setAuthState((prev) => ({ ...prev, isLoading: false }));
-        }
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
       console.error('Error checking auth:', error);
@@ -98,6 +115,18 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     try {
+      if (!isSupabaseConfigured || !signInWithEmail) {
+        // Mock sign in for development
+        const mockUser = { id: `user_${Date.now()}`, email };
+        await AsyncStorage.setItem(AUTH_KEY, JSON.stringify({ user: mockUser }));
+        setAuthState((prev) => ({
+          ...prev,
+          user: mockUser,
+          isAuthenticated: true,
+          isLoading: false,
+        }));
+        return { user: mockUser, session: null };
+      }
       const { user, session } = await signInWithEmail(email, password);
       setAuthState((prev) => ({
         ...prev,
@@ -115,6 +144,18 @@ export function AuthProvider({ children }) {
 
   const signUp = async (email, password) => {
     try {
+      if (!isSupabaseConfigured || !signUpWithEmail) {
+        // Mock sign up for development
+        const mockUser = { id: `user_${Date.now()}`, email };
+        await AsyncStorage.setItem(AUTH_KEY, JSON.stringify({ user: mockUser }));
+        setAuthState((prev) => ({
+          ...prev,
+          user: mockUser,
+          isAuthenticated: true,
+          isLoading: false,
+        }));
+        return { user: mockUser, session: null };
+      }
       const { user, session } = await signUpWithEmail(email, password);
       setAuthState((prev) => ({
         ...prev,
@@ -132,7 +173,9 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     try {
-      await supabaseSignOut();
+      if (isSupabaseConfigured && supabaseSignOut) {
+        await supabaseSignOut();
+      }
       await AsyncStorage.removeItem(AUTH_KEY);
       setAuthState({
         user: null,
