@@ -313,3 +313,48 @@ Funnel must be airtight BEFORE viral moment:
 ### Key Insight
 
 Creator has multiple viral videos (1M+ views) on other accounts with "objectively not well made" content - just relatable. This algorithm understanding is a major asset. With quality content posted daily for 6 months (180+ pieces), viral hits are statistically likely.
+
+### Content Volume Strategy
+
+**Planned output:** 30-40 pieces/month x 3 platforms (TikTok, Instagram, YouTube Shorts) = 90-120 pieces/month
+
+**Revised projections with this volume:**
+- Month 1: Testing hooks/formats
+- Month 2-3: Double down on winners
+- Expected views by Month 3: 500K-1M+/month
+- 3-month MRR projection: $2,500-5,000
+- 6-month MRR projection: $8,000-15,000+
+
+$20K MRR in 6 months is achievable with this approach.
+
+---
+
+## Session Notes
+
+### Dec 12, 2024 - Session 3 (Current Session)
+
+**UI Overhaul Completed:**
+- Updated all 6 main screens to match onboarding light theme
+- Design system: Light background (#F9F9F9), white cards, subtle shadows, Ionicons
+- Screens updated: HomeScreen, RestaurantResultsScreen, RestaurantDetailScreen, MealDetailScreen, ProfileScreen, AIChatScreen
+
+**Marketing Research:**
+- Deep dive on MenuFit/Cole Kosco competitor analysis
+- Defined CTA strategy (different from Cole's "comment X for Y")
+- Created market-research-search-terms.md for TikTok research
+
+**Business Setup:**
+- Purchased domain: macromenuapp.com
+- Set up Google Workspace email: aj@macromenuapp.com
+- Signed up for Nutritionix API (awaiting approval)
+
+**Current Status:**
+- App UI complete and polished
+- Waiting on Nutritionix API approval for real restaurant data
+- Next: RevenueCat subscriptions or App Store prep
+
+**Pricing:**
+- $6.99/month or $29.99/year
+
+**Business Email:** aj@macromenuapp.com
+**Domain:** macromenuapp.com (also own getmacromenu.com)
