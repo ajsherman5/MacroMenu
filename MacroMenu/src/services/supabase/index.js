@@ -1,2 +1,3 @@
-export { supabase } from './config';
+export { supabase, isSupabaseConfigured } from './config';
 export * from './auth';
+export * from './database';

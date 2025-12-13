@@ -2,14 +2,102 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useOnboarding, useUser, useAuth } from '../../context';
 
 const plans = [
   { id: 'yearly', label: 'Yearly', price: '$29.99', perMonth: '$2.49/mo', badge: 'Best Value', savings: 'Save 75%' },
   { id: 'monthly', label: 'Monthly', price: '$9.99', perMonth: '$9.99/mo', badge: null, savings: null },
 ];
 
+// Map restaurant IDs to display names
+const RESTAURANT_NAMES = {
+  chipotle: 'Chipotle',
+  shakeshack: 'Shake Shack',
+  jerseymikes: "Jersey Mike's",
+  whataburger: 'Whataburger',
+  buffalowildwings: 'Buffalo Wild Wings',
+  sonic: 'Sonic',
+  chickfila: 'Chick-fil-A',
+  cava: 'CAVA',
+  mcdonalds: "McDonald's",
+  subway: 'Subway',
+  tacobell: 'Taco Bell',
+  wendys: "Wendy's",
+  panera: 'Panera Bread',
+  sweetgreen: 'Sweetgreen',
+  qdoba: 'Qdoba',
+};
+
+function getRestaurantNameFromId(id) {
+  return RESTAURANT_NAMES[id] || id;
+}
+
 export default function PaywallScreen({ navigation }) {
   const [selected, setSelected] = useState('yearly');
+  const { getOnboardingData } = useOnboarding();
+  const { updateProfile, updatePreferences, updateRestrictions, completeOnboarding, syncToCloud } = useUser();
+  const { user: authUser } = useAuth();
+
+  const handleStartTrial = async () => {
+    // Transfer all onboarding data to UserContext
+    const data = getOnboardingData();
+    console.log('[PaywallScreen] Onboarding data:', JSON.stringify(data, null, 2));
+
+    // Convert favorite restaurant IDs to full restaurant objects
+    const favoriteRestaurantObjects = (data.favoriteRestaurants || []).map(id => ({
+      id,
+      name: getRestaurantNameFromId(id),
+    }));
+
+    // Build the complete user object for cloud sync
+    const completeUserData = {
+      profile: {
+        goal: data.goal,
+        gender: data.gender,
+        height: data.height,
+        currentWeight: data.currentWeight,
+        goalWeight: data.goalWeight,
+        timeline: data.timeline,
+        activityLevel: data.activityLevel,
+        eatingStyle: data.eatingStyle,
+        daysEatingOut: data.daysEatingOut,
+      },
+      preferences: {
+        favoriteRestaurants: favoriteRestaurantObjects,
+        foodLikes: data.foodLikes || { cuisines: [], entrees: [], proteins: [], sides: [], flavors: [] },
+        foodDislikes: data.foodDislikes || { cuisines: [], entrees: [], proteins: [], sides: [], flavors: [] },
+      },
+      restrictions: {
+        allergies: data.allergies || [],
+        dietaryPreferences: data.dietaryPreferences || [],
+      },
+      macros: {
+        calories: null,
+        protein: null,
+        carbs: null,
+        fat: null,
+      },
+      recentRestaurants: [],
+      onboardingComplete: true,
+    };
+
+    // Update local state
+    updateProfile(completeUserData.profile);
+    updatePreferences(completeUserData.preferences);
+    updateRestrictions(completeUserData.restrictions);
+    completeOnboarding();
+
+    // Sync all data to cloud if user is authenticated (not guest)
+    // Pass the complete data directly to avoid race conditions
+    if (authUser && !authUser.isGuest) {
+      console.log('[PaywallScreen] Syncing user data to cloud...');
+      await syncToCloud(completeUserData);
+      console.log('[PaywallScreen] Cloud sync complete');
+    }
+
+    // Navigate to main app
+    navigation.replace('MainApp');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,7 +166,7 @@ export default function PaywallScreen({ navigation }) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.replace('MainApp')}
+          onPress={handleStartTrial}
         >
           <Text style={styles.buttonText}>Start 3-Day Free Trial</Text>
         </TouchableOpacity>

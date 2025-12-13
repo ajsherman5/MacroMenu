@@ -358,3 +358,97 @@ $20K MRR in 6 months is achievable with this approach.
 
 **Business Email:** aj@macromenuapp.com
 **Domain:** macromenuapp.com (also own getmacromenu.com)
+
+---
+
+## Session Notes
+
+### Dec 13, 2025 - Session 4 (Current Session)
+
+**Supabase Cloud Sync Fixed:**
+- Fixed RLS (Row Level Security) policy errors preventing user data sync
+- Fixed auth session not persisting - added auto sign-in after signup if no session returned
+- Fixed race condition where syncToCloud was called before React state updates
+- Modified PaywallScreen to build complete user data object and pass directly to syncToCloud
+
+**Returning User Flow:**
+- Added "Sign In" link to SplashScreen for returning users
+- Added auth check to skip directly to MainApp if user has completed onboarding
+
+**Tiered Recommendation System Implemented:**
+- Created three-tier system on "For You" tab:
+  - **Top Picks For You** (85%+ match score) - Best matches with positive "why" labels
+  - **Great Options** (70-84% match score) - Good matches with positive labels
+  - **Other Options** (50-69% match score) - Collapsible section with contextual labels
+- Added contextual "why" labels explaining why each meal is in its tier
+- Positive messaging for top tiers, only show negative reasons in "Other Options"
+
+**Scoring Algorithm Made More Generous:**
+- **Calorie scoring**: Perfect score for within 20% (was 10%), good score for within 35% (was 25%)
+- **Protein scoring**: Perfect score for meeting/exceeding target, 95 for within 15%, 85 for within 25%, 70 for within 40%
+- **Base preference score**: Increased from 70 to 80
+- **Dislike penalty**: Reduced from -20 to -10
+
+**Files Modified:**
+- `src/utils/matchScore.js` - Added detailed reasons, made scoring more generous
+- `src/screens/main/RecommendedScreen.js` - Tiered system, renamed sections, new styles
+- `src/screens/onboarding/SplashScreen.js` - Added Sign In link
+- `src/context/AuthContext.js` - Auto sign-in after signup
+- `src/context/UserContext.js` - syncToCloud accepts optional data parameter
+- `src/screens/onboarding/PaywallScreen.js` - Pass complete data to syncToCloud
+- `src/services/supabase/database.js` - Added session debugging
+
+---
+
+## NEXT SESSION TODO LIST (Pick up here!)
+
+### 1. Disliked Preferences UX
+- Restaurants/food types user marked as "dislike" (e.g., Mediterranean, Salads) still appear in "For You"
+- Current behavior: They show if macros are good, but user may not care
+- **Goal**: Add subtle indicator that says "we know you don't usually like this, but it's a great option for your goals"
+- Example: CAVA showing for a user who dislikes Mediterranean food
+- Need to convey: "We understand your preference, but this hits your macros so we're showing it anyway"
+
+### 2. Restaurant Logo Display Improvements
+- Current logos look "okay" but not great
+- Need to figure out better presentation/styling
+- Consider: sizing, backgrounds, borders, shadows, consistency across different logo shapes
+
+### 3. Local Restaurant Menus & UI
+- Figure out how to handle non-chain/local restaurants
+- How to display menus without Nutritionix data?
+- UI considerations for restaurants without standardized nutrition info
+
+### 4. Comprehensive Onboarding Scenario Testing (Complex Task)
+- Test almost all possible combinations of onboarding inputs:
+  - Different goals (bulk, cut, maintain)
+  - Different heights and weights
+  - Different activity levels
+  - Different food preferences (likes/dislikes)
+  - Different allergies
+  - Different dietary restrictions
+- Verify the resulting recommendations make sense for each scenario
+- Ensure outcomes properly reflect the input data
+- This is a lengthy QA task to validate the algorithm works correctly across all edge cases
+
+---
+
+## Key Algorithm Details (For Reference)
+
+### Match Score Weights
+- Calories: 30%
+- Protein: 35% (most important for fitness)
+- Macro Balance: 20%
+- Preferences: 15%
+
+### Tier Thresholds
+- Top Picks: 85%+
+- Great Options: 70-84%
+- Other Options: 50-69%
+- Below 50%: Not shown
+
+### Scoring Tolerances (Current - More Generous)
+- Calories: Perfect within 20%, good within 35%
+- Protein: Perfect if meets target, 95 within 15%, 85 within 25%
+- Base preference: 80 (boosted from 70)
+- Dislike penalty: -10 (reduced from -20)

@@ -26,13 +26,13 @@ import LoadingScreen from '../screens/onboarding/LoadingScreen';
 import SignInScreen from '../screens/onboarding/SignInScreen';
 import PaywallScreen from '../screens/onboarding/PaywallScreen';
 
-// Main app screens
-import HomeScreen from '../screens/main/HomeScreen';
+// Main app - Tab Navigator
+import MainTabNavigator from './MainTabNavigator';
+
+// Detail screens (stack on top of tabs)
 import RestaurantResultsScreen from '../screens/main/RestaurantResultsScreen';
 import RestaurantDetailScreen from '../screens/main/RestaurantDetailScreen';
 import MealDetailScreen from '../screens/main/MealDetailScreen';
-import AIChatScreen from '../screens/main/AIChatScreen';
-import ProfileScreen from '../screens/main/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -73,13 +73,13 @@ export default function AppNavigator() {
         <Stack.Screen name="SignIn" component={SignInScreen} />
         <Stack.Screen name="Paywall" component={PaywallScreen} />
 
-        {/* Main App */}
-        <Stack.Screen name="MainApp" component={HomeScreen} />
+        {/* Main App with Tab Navigator */}
+        <Stack.Screen name="MainApp" component={MainTabNavigator} />
+
+        {/* Detail screens (stack on top of tabs) */}
         <Stack.Screen name="RestaurantResults" component={RestaurantResultsScreen} />
         <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
         <Stack.Screen name="MealDetail" component={MealDetailScreen} />
-        <Stack.Screen name="AIChat" component={AIChatScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

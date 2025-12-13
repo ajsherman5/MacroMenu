@@ -17,7 +17,9 @@
       "Bash(git push:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(npx eslint:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

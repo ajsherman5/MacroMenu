@@ -159,10 +159,18 @@ export default function MealDetailScreen({ navigation, route }) {
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Meal Header */}
         <View style={styles.mealHeader}>
-          <View style={[styles.matchBadge, { backgroundColor: getMatchBg(meal.matchScore || 80) }]}>
-            <Text style={[styles.matchText, { color: getMatchColor(meal.matchScore || 80) }]}>
-              {meal.matchScore || 80}% match
-            </Text>
+          <View style={styles.badgeRow}>
+            <View style={[styles.matchBadge, { backgroundColor: getMatchBg(meal.matchScore || 80) }]}>
+              <Text style={[styles.matchText, { color: getMatchColor(meal.matchScore || 80) }]}>
+                {meal.matchScore || 80}% match
+              </Text>
+            </View>
+            {meal.isEstimated && (
+              <View style={styles.estimatedBadge}>
+                <Ionicons name="sparkles-outline" size={14} color="#8B5CF6" />
+                <Text style={styles.estimatedBadgeText}>Estimated</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.mealName}>{meal.name}</Text>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
@@ -170,6 +178,16 @@ export default function MealDetailScreen({ navigation, route }) {
             <Text style={styles.mealDescription}>{meal.description}</Text>
           )}
         </View>
+
+        {/* Estimated Notice */}
+        {meal.isEstimated && (
+          <View style={styles.estimatedNotice}>
+            <Ionicons name="information-circle-outline" size={18} color="#8B5CF6" />
+            <Text style={styles.estimatedNoticeText}>
+              Nutrition values are AI-estimated based on typical portions and ingredients. Actual values may vary.
+            </Text>
+          </View>
+        )}
 
         {/* Nutrition Card */}
         <View style={styles.nutritionCard}>
@@ -362,15 +380,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 24,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
   matchBadge: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 16,
   },
   matchText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  estimatedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F3FF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+  },
+  estimatedBadgeText: {
+    fontSize: 13,
+    color: '#8B5CF6',
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+  estimatedNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F5F3FF',
+    borderRadius: 12,
+    padding: 14,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+  },
+  estimatedNoticeText: {
+    fontSize: 13,
+    color: '#6D28D9',
+    marginLeft: 10,
+    flex: 1,
+    lineHeight: 18,
   },
   mealName: {
     fontSize: 28,

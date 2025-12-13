@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../context/UserContext';
-import { searchMenuItems } from '../../services/api/nutritionix';
+import { getRestaurantMenu, isKnownChain } from '../../services/api';
+import { estimateMenuNutrition, generateMealInsight } from '../../services/api/menuAnalysis';
 import { rankMeals } from '../../utils/matchScore';
 import { calculateUserMacros, calculatePerMealMacros } from '../../utils/macroCalculator';
 
@@ -36,14 +37,34 @@ function getMatchBg(score) {
   return '#FEE2E2';
 }
 
+// Sample menu items for local restaurants when no data is available
+const LOCAL_RESTAURANT_SAMPLE_MENU = [
+  { name: 'Grilled Chicken Plate', description: 'Grilled chicken with two sides' },
+  { name: 'House Salad with Protein', description: 'Fresh greens with grilled protein' },
+  { name: 'Burger with Fries', description: 'Classic burger with side of fries' },
+  { name: 'Grilled Salmon', description: 'Pan-seared salmon with vegetables' },
+  { name: 'Steak Dinner', description: 'Grilled steak with potato' },
+  { name: 'Chicken Salad', description: 'Grilled chicken over mixed greens' },
+  { name: 'Fish Tacos', description: 'Grilled fish in soft tortillas' },
+  { name: 'Pasta Primavera', description: 'Pasta with seasonal vegetables' },
+  { name: 'Grilled Shrimp', description: 'Seasoned shrimp with rice' },
+  { name: 'Veggie Bowl', description: 'Rice bowl with roasted vegetables' },
+];
+
 export default function RestaurantDetailScreen({ navigation, route }) {
-  const { user } = useUser();
+  const { user, toggleFavoriteRestaurant, isFavoriteRestaurant } = useUser();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isLocalRestaurant, setIsLocalRestaurant] = useState(false);
 
   const restaurant = route?.params?.restaurant || { name: 'Restaurant', type: 'Restaurant' };
   const logo = getRestaurantLogo(restaurant.name);
+  const isFavorite = isFavoriteRestaurant(restaurant.id);
+
+  const handleToggleFavorite = () => {
+    toggleFavoriteRestaurant(restaurant);
+  };
 
   const getUserTargets = () => {
     if (user.macros?.calories) {
@@ -72,12 +93,33 @@ export default function RestaurantDetailScreen({ navigation, route }) {
     setError(null);
 
     try {
-      const items = await searchMenuItems(restaurant.name);
+      // Check if this is a known chain restaurant
+      const knownChain = isKnownChain(restaurant.name);
+      setIsLocalRestaurant(!knownChain);
 
+      let items = [];
+
+      if (knownChain) {
+        // Use FatSecret API via our hybrid service for known chains
+        items = await getRestaurantMenu(restaurant.name, { limit: 30 });
+      }
+
+      // If no items found (local restaurant or chain without data), use AI estimation
       if (items.length === 0) {
-        setError('No menu items found. Try searching for a specific item.');
-        setMenuItems([]);
-        return;
+        console.log('Using AI estimation for:', restaurant.name);
+        setIsLocalRestaurant(true);
+
+        // Get cuisine type from restaurant data if available
+        const cuisineType = restaurant.type || restaurant.cuisineType || 'American';
+
+        // Use sample menu items and estimate their nutrition
+        const estimatedItems = estimateMenuNutrition(LOCAL_RESTAURANT_SAMPLE_MENU, cuisineType);
+
+        // Add insights based on user goals
+        items = estimatedItems.map(item => ({
+          ...item,
+          insight: generateMealInsight(item, { goal: user.profile?.goal }),
+        }));
       }
 
       const targets = getUserTargets();
@@ -124,7 +166,13 @@ export default function RestaurantDetailScreen({ navigation, route }) {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.favoriteButton} onPress={handleToggleFavorite}>
+          <Ionicons
+            name={isFavorite ? "heart" : "heart-outline"}
+            size={24}
+            color={isFavorite ? "#EF4444" : "#000"}
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -158,6 +206,21 @@ export default function RestaurantDetailScreen({ navigation, route }) {
           </View>
         ) : (
           <View style={styles.section}>
+            {/* Local Restaurant Notice */}
+            {isLocalRestaurant && (
+              <View style={styles.estimatedNotice}>
+                <View style={styles.estimatedNoticeIcon}>
+                  <Ionicons name="sparkles" size={18} color="#8B5CF6" />
+                </View>
+                <View style={styles.estimatedNoticeContent}>
+                  <Text style={styles.estimatedNoticeTitle}>AI-Estimated Nutrition</Text>
+                  <Text style={styles.estimatedNoticeText}>
+                    Macros are estimated based on typical portions. Actual values may vary.
+                  </Text>
+                </View>
+              </View>
+            )}
+
             <Text style={styles.sectionTitle}>Best For You</Text>
             <Text style={styles.sectionSubtitle}>
               Ranked by your {getGoalText()} goals
@@ -171,8 +234,16 @@ export default function RestaurantDetailScreen({ navigation, route }) {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuHeader}>
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankText}>#{index + 1}</Text>
+                  <View style={styles.menuHeaderLeft}>
+                    <View style={styles.rankBadge}>
+                      <Text style={styles.rankText}>#{index + 1}</Text>
+                    </View>
+                    {item.isEstimated && (
+                      <View style={styles.estimatedBadge}>
+                        <Ionicons name="sparkles-outline" size={12} color="#8B5CF6" />
+                        <Text style={styles.estimatedBadgeText}>Estimated</Text>
+                      </View>
+                    )}
                   </View>
                   <View style={[styles.matchBadge, { backgroundColor: getMatchBg(item.matchScore) }]}>
                     <Text style={[styles.matchText, { color: getMatchColor(item.matchScore) }]}>
@@ -210,8 +281,16 @@ export default function RestaurantDetailScreen({ navigation, route }) {
                   </View>
                 </View>
 
-                {/* Match breakdown hints */}
-                {item.matchBreakdown && (
+                {/* AI Insight for estimated meals */}
+                {item.isEstimated && item.insight && (
+                  <View style={styles.insightContainer}>
+                    <Ionicons name="bulb-outline" size={14} color="#8B5CF6" />
+                    <Text style={styles.insightText}>{item.insight}</Text>
+                  </View>
+                )}
+
+                {/* Match breakdown hints for chain restaurants */}
+                {!item.isEstimated && item.matchBreakdown && (
                   <View style={styles.breakdownHint}>
                     {item.matchBreakdown.protein >= 85 && (
                       <View style={styles.hintBadge}>
@@ -264,6 +343,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  favoriteButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -486,5 +573,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  // Estimated nutrition styles
+  estimatedNotice: {
+    flexDirection: 'row',
+    backgroundColor: '#F5F3FF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+  },
+  estimatedNoticeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EDE9FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  estimatedNoticeContent: {
+    flex: 1,
+  },
+  estimatedNoticeTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#5B21B6',
+    marginBottom: 2,
+  },
+  estimatedNoticeText: {
+    fontSize: 13,
+    color: '#7C3AED',
+    lineHeight: 18,
+  },
+  menuHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  estimatedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F3FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+  },
+  estimatedBadgeText: {
+    fontSize: 11,
+    color: '#8B5CF6',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  insightContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F5F3FF',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 12,
+  },
+  insightText: {
+    fontSize: 13,
+    color: '#6D28D9',
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 18,
   },
 });

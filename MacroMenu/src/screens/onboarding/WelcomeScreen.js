@@ -1,8 +1,24 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUser } from '../../context/UserContext';
 
 export default function WelcomeScreen({ navigation }) {
+  const { completeOnboarding, updateProfile } = useUser();
+
+  const handleSkipOnboarding = () => {
+    // Set some default profile data for testing
+    updateProfile({
+      goal: 'cut',
+      gender: 'male',
+      age: 28,
+      height: 70, // 5'10"
+      currentWeight: 180,
+      targetWeight: 170,
+      activityLevel: 'moderate',
+    });
+    completeOnboarding();
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -29,6 +45,14 @@ export default function WelcomeScreen({ navigation }) {
         <Text style={styles.loginText}>
           Already have an account? <Text style={styles.loginLink}>Log in</Text>
         </Text>
+
+        {/* DEV ONLY - Skip Onboarding Button */}
+        <TouchableOpacity
+          style={styles.devSkipButton}
+          onPress={handleSkipOnboarding}
+        >
+          <Text style={styles.devSkipText}>Skip Onboarding (DEV)</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -83,5 +107,19 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     color: '#4ADE80',
+  },
+  devSkipButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  devSkipText: {
+    color: '#F59E0B',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

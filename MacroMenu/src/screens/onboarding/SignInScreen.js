@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../context';
+import { useAuth, useUser } from '../../context';
 
 export default function SignInScreen({ navigation }) {
   const [mode, setMode] = useState('options'); // 'options', 'signin', 'signup'
@@ -21,6 +21,7 @@ export default function SignInScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, continueAsGuest } = useAuth();
+  const { setAuthUser, loadUserFromCloud } = useUser();
 
   const handleEmailAuth = async () => {
     if (!email || !password) {
@@ -30,11 +31,29 @@ export default function SignInScreen({ navigation }) {
 
     setLoading(true);
     try {
+      let result;
       if (mode === 'signin') {
-        await signIn(email, password);
+        result = await signIn(email, password);
       } else {
-        await signUp(email, password);
+        result = await signUp(email, password);
       }
+
+      // Set auth user for cloud sync
+      if (result?.user?.id) {
+        setAuthUser(result.user.id, false);
+
+        // For existing users signing in, load their data from cloud
+        if (mode === 'signin') {
+          const hasCloudData = await loadUserFromCloud(result.user.id);
+          if (hasCloudData) {
+            // User has existing data - skip to main app
+            navigation.replace('MainApp');
+            return;
+          }
+        }
+      }
+
+      // New user or no cloud data - continue to paywall
       navigation.navigate('Paywall');
     } catch (error) {
       Alert.alert(
@@ -50,6 +69,8 @@ export default function SignInScreen({ navigation }) {
     setLoading(true);
     try {
       await continueAsGuest();
+      // Guest users don't sync to cloud
+      setAuthUser(null, true);
       navigation.navigate('Paywall');
     } catch (error) {
       Alert.alert('Error', 'Failed to continue. Please try again.');

@@ -1,8 +1,42 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../../context/UserContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SplashScreen({ navigation }) {
+  const { user, loading: userLoading, completeOnboarding, updateProfile } = useUser();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Check if user should skip to main app
+  useEffect(() => {
+    if (!authLoading && !userLoading) {
+      // If user has completed onboarding, go straight to main app
+      if (user?.onboardingComplete) {
+        console.log('[SplashScreen] User has completed onboarding, going to MainApp');
+        navigation.replace('MainApp');
+        return;
+      }
+      setCheckingAuth(false);
+    }
+  }, [authLoading, userLoading, user?.onboardingComplete, navigation]);
+
+  const handleSkipOnboarding = () => {
+    // Set some default profile data for testing
+    updateProfile({
+      goal: 'cut',
+      gender: 'male',
+      age: 28,
+      height: 70, // 5'10"
+      currentWeight: 180,
+      targetWeight: 170,
+      activityLevel: 'moderate',
+    });
+    completeOnboarding();
+    // Navigate directly to main app
+    navigation.replace('MainApp');
+  };
   const [showButton, setShowButton] = useState(false);
 
   const logoScale = useRef(new Animated.Value(0)).current;
@@ -16,6 +50,9 @@ export default function SplashScreen({ navigation }) {
   const buttonTranslateY = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
+    // Don't start animations until we've checked auth
+    if (checkingAuth) return;
+
     // Sequence of animations
     Animated.sequence([
       // First: Ring appears and scales
@@ -81,11 +118,24 @@ export default function SplashScreen({ navigation }) {
         }),
       ]).start();
     });
-  }, []);
+  }, [checkingAuth]);
 
   const handleGetStarted = () => {
     navigation.replace('GoalSelection');
   };
+
+  const handleSignIn = () => {
+    navigation.navigate('SignIn');
+  };
+
+  // Show loading while checking auth
+  if (checkingAuth) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -158,6 +208,24 @@ export default function SplashScreen({ navigation }) {
           <Text style={styles.buttonText}>Get Started</Text>
           <Ionicons name="arrow-forward" size={20} color="#000" style={styles.buttonIcon} />
         </TouchableOpacity>
+
+        {/* Sign In link for returning users */}
+        <TouchableOpacity
+          style={styles.signInButton}
+          onPress={handleSignIn}
+        >
+          <Text style={styles.signInText}>Already have an account? <Text style={styles.signInLink}>Sign In</Text></Text>
+        </TouchableOpacity>
+
+        {/* DEV ONLY - Skip Onboarding Button */}
+        {__DEV__ && (
+          <TouchableOpacity
+            style={styles.devSkipButton}
+            onPress={handleSkipOnboarding}
+          >
+            <Text style={styles.devSkipText}>Skip Onboarding (DEV)</Text>
+          </TouchableOpacity>
+        )}
       </Animated.View>
     </View>
   );
@@ -229,5 +297,31 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 8,
+  },
+  signInButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  signInText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 15,
+  },
+  signInLink: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  devSkipButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    alignItems: 'center',
+  },
+  devSkipText: {
+    color: '#F59E0B',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

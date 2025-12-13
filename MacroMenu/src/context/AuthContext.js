@@ -156,7 +156,22 @@ export function AuthProvider({ children }) {
         }));
         return { user: mockUser, session: null };
       }
-      const { user, session } = await signUpWithEmail(email, password);
+      const result = await signUpWithEmail(email, password);
+      console.log('[AuthContext] SignUp result:', JSON.stringify(result, null, 2));
+
+      // Supabase may not return a session if email confirmation is required
+      // In that case, we need to sign in immediately after signup
+      let user = result.user;
+      let session = result.session;
+
+      if (!session && user) {
+        console.log('[AuthContext] No session after signup, signing in...');
+        const signInResult = await signInWithEmail(email, password);
+        user = signInResult.user;
+        session = signInResult.session;
+        console.log('[AuthContext] SignIn after signup result:', JSON.stringify(signInResult, null, 2));
+      }
+
       setAuthState((prev) => ({
         ...prev,
         user,

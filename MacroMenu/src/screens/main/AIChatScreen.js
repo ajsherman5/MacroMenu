@@ -45,16 +45,12 @@ export default function AIChatScreen({ navigation }) {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={styles.headerIcon}>
             <Ionicons name="sparkles" size={18} color="#000" />
           </View>
           <Text style={styles.headerTitle}>AI Assistant</Text>
         </View>
-        <View style={{ width: 40 }} />
       </View>
 
       <KeyboardAvoidingView
@@ -125,21 +121,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
     backgroundColor: '#fff',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   headerCenter: {
     flexDirection: 'row',
